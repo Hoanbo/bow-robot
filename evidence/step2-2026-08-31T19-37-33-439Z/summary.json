@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-08-31T19:37:33.459Z",
+  "results": [
+    {
+      "testId": "E2E-COMP-001",
+      "name": "Open Notepad",
+      "timestamp": "2026-08-31T19:37:33.443Z",
+      "userRequest": "Open Notepad",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    },
+    {
+      "testId": "E2E-COMP-002",
+      "name": "Open Calculator",
+      "timestamp": "2026-08-31T19:37:33.446Z",
+      "userRequest": "Open Calculator",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    },
+    {
+      "testId": "E2E-COMP-003",
+      "name": "Open Chrome",
+      "timestamp": "2026-08-31T19:37:33.447Z",
+      "userRequest": "Open Chrome",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    },
+    {
+      "testId": "E2E-COMP-004",
+      "name": "Open Notepad and type text",
+      "timestamp": "2026-08-31T19:37:33.449Z",
+      "userRequest": "Open Notepad and type text",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    },
+    {
+      "testId": "E2E-COMP-005",
+      "name": "Open Chrome and navigate",
+      "timestamp": "2026-08-31T19:37:33.450Z",
+      "userRequest": "Open Chrome and navigate",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    },
+    {
+      "testId": "E2E-COMP-006",
+      "name": "Remote Agent offline",
+      "timestamp": "2026-08-31T19:37:33.451Z",
+      "userRequest": "Remote Agent offline",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    },
+    {
+      "testId": "E2E-COMP-007",
+      "name": "Invalid tool",
+      "timestamp": "2026-08-31T19:37:33.453Z",
+      "userRequest": "Invalid tool",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    },
+    {
+      "testId": "E2E-COMP-008",
+      "name": "Unauthorized Remote Agent",
+      "timestamp": "2026-08-31T19:37:33.455Z",
+      "userRequest": "Unauthorized Remote Agent",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    },
+    {
+      "testId": "E2E-COMP-009",
+      "name": "Verification failure",
+      "timestamp": "2026-08-31T19:37:33.456Z",
+      "userRequest": "Verification failure",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    },
+    {
+      "testId": "E2E-COMP-010",
+      "name": "Dangerous action confirmation",
+      "timestamp": "2026-08-31T19:37:33.457Z",
+      "userRequest": "Dangerous action confirmation",
+      "status": "SKIPPED",
+      "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+    }
+  ]
+}

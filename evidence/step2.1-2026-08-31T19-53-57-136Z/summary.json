@@ -1,0 +1,507 @@
+{
+  "timestamp": "2026-08-31T19:54:05.565Z",
+  "results": [
+    {
+      "testId": "E2E-COMP-001",
+      "name": "Open Notepad",
+      "timestamp": "2026-08-31T19:53:57.907Z",
+      "userRequest": "Open Notepad",
+      "status": "PASS",
+      "response": {
+        "id": "turn-1788206037190-io8g2tn56",
+        "input": "open Notepad",
+        "plan": {
+          "id": "plan-1788206037190-ttb590xu4",
+          "goal": "open Notepad",
+          "steps": [
+            {
+              "id": "step-1",
+              "toolName": "open_application",
+              "input": {
+                "name": "notepad"
+              },
+              "description": "Open notepad",
+              "dependencies": [],
+              "retryCount": 0,
+              "maxRetries": 2,
+              "timeout": 30000
+            }
+          ],
+          "estimatedDuration": 30000,
+          "createdAt": "2026-08-31T19:53:57.190Z",
+          "updatedAt": "2026-08-31T19:53:57.190Z"
+        },
+        "execution": {
+          "planId": "plan-1788206037190-ttb590xu4",
+          "goal": "open Notepad",
+          "steps": [
+            {
+              "stepId": "step-1",
+              "toolName": "open_application",
+              "success": true,
+              "result": {
+                "success": true,
+                "tool": "open_application",
+                "input": {
+                  "name": "notepad"
+                },
+                "output": {
+                  "success": true,
+                  "action": "open_application",
+                  "result": {
+                    "name": "notepad",
+                    "executable": "notepad",
+                    "launched": true,
+                    "pid": 20300,
+                    "verified": true
+                  },
+                  "timestamp": "2026-08-31T19:53:57.513Z",
+                  "duration": 322
+                },
+                "context": {
+                  "sessionId": "e2e-1788206037139",
+                  "userId": "e2e-1788206037139",
+                  "timestamp": "2026-08-31T19:53:57.190Z",
+                  "requestId": "exec-step-1-0"
+                },
+                "duration": 323
+              },
+              "startTime": "2026-08-31T19:53:57.514Z",
+              "endTime": "2026-08-31T19:53:57.514Z",
+              "duration": 324,
+              "retries": 0
+            }
+          ],
+          "success": true,
+          "totalDuration": 324,
+          "completedAt": "2026-08-31T19:53:57.514Z"
+        },
+        "response": "✓ Task completed successfully. Executed 1 step(s) in 324ms.",
+        "timestamp": "2026-08-31T19:53:57.190Z"
+      }
+    },
+    {
+      "testId": "E2E-COMP-002",
+      "name": "Open Calculator",
+      "timestamp": "2026-08-31T19:53:58.475Z",
+      "userRequest": "Open Calculator",
+      "status": "PASS",
+      "response": {
+        "id": "turn-1788206037913-a2osrr41c",
+        "input": "open Calculator",
+        "plan": {
+          "id": "plan-1788206037913-jslq2259c",
+          "goal": "open Calculator",
+          "steps": [
+            {
+              "id": "step-1",
+              "toolName": "open_application",
+              "input": {
+                "name": "calculator"
+              },
+              "description": "Open calculator",
+              "dependencies": [],
+              "retryCount": 0,
+              "maxRetries": 2,
+              "timeout": 30000
+            }
+          ],
+          "estimatedDuration": 30000,
+          "createdAt": "2026-08-31T19:53:57.913Z",
+          "updatedAt": "2026-08-31T19:53:57.913Z"
+        },
+        "execution": {
+          "planId": "plan-1788206037913-jslq2259c",
+          "goal": "open Calculator",
+          "steps": [
+            {
+              "stepId": "step-1",
+              "toolName": "open_application",
+              "success": true,
+              "result": {
+                "success": true,
+                "tool": "open_application",
+                "input": {
+                  "name": "calculator"
+                },
+                "output": {
+                  "success": true,
+                  "action": "open_application",
+                  "result": {
+                    "name": "calculator",
+                    "executable": "calc",
+                    "launched": true,
+                    "pid": 35164,
+                    "verified": true
+                  },
+                  "timestamp": "2026-08-31T19:53:58.164Z",
+                  "duration": 250
+                },
+                "context": {
+                  "sessionId": "e2e-1788206037911",
+                  "userId": "e2e-1788206037911",
+                  "timestamp": "2026-08-31T19:53:57.913Z",
+                  "requestId": "exec-step-1-0"
+                },
+                "duration": 252
+              },
+              "startTime": "2026-08-31T19:53:58.165Z",
+              "endTime": "2026-08-31T19:53:58.165Z",
+              "duration": 252,
+              "retries": 0
+            }
+          ],
+          "success": true,
+          "totalDuration": 252,
+          "completedAt": "2026-08-31T19:53:58.165Z"
+        },
+        "response": "✓ Task completed successfully. Executed 1 step(s) in 252ms.",
+        "timestamp": "2026-08-31T19:53:57.913Z"
+      }
+    },
+    {
+      "testId": "E2E-COMP-003",
+      "name": "Open Chrome",
+      "timestamp": "2026-08-31T19:53:58.799Z",
+      "userRequest": "Open Chrome",
+      "status": "PASS",
+      "response": {
+        "id": "turn-1788206038480-bjvo812dd",
+        "input": "open Chrome",
+        "plan": {
+          "id": "plan-1788206038480-enyvaf243",
+          "goal": "open Chrome",
+          "steps": [
+            {
+              "id": "step-1",
+              "toolName": "open_chrome",
+              "input": {
+                "url": "https://www.google.com"
+              },
+              "description": "Open browser to Google",
+              "dependencies": [],
+              "retryCount": 0,
+              "maxRetries": 2,
+              "timeout": 30000
+            }
+          ],
+          "estimatedDuration": 30000,
+          "createdAt": "2026-08-31T19:53:58.480Z",
+          "updatedAt": "2026-08-31T19:53:58.480Z"
+        },
+        "execution": {
+          "planId": "plan-1788206038480-enyvaf243",
+          "goal": "open Chrome",
+          "steps": [
+            {
+              "stepId": "step-1",
+              "toolName": "open_chrome",
+              "success": true,
+              "result": {
+                "success": true,
+                "tool": "open_chrome",
+                "input": {
+                  "url": "https://www.google.com"
+                },
+                "output": {
+                  "success": true,
+                  "action": "open_application",
+                  "result": {
+                    "name": "chrome",
+                    "executable": "chrome",
+                    "launched": true,
+                    "pid": 24096,
+                    "verified": false
+                  },
+                  "timestamp": "2026-08-31T19:53:58.486Z",
+                  "duration": 5
+                },
+                "context": {
+                  "sessionId": "e2e-1788206038478",
+                  "userId": "e2e-1788206038478",
+                  "timestamp": "2026-08-31T19:53:58.480Z",
+                  "requestId": "exec-step-1-0"
+                },
+                "duration": 6
+              },
+              "startTime": "2026-08-31T19:53:58.487Z",
+              "endTime": "2026-08-31T19:53:58.487Z",
+              "duration": 7,
+              "retries": 0
+            }
+          ],
+          "success": true,
+          "totalDuration": 7,
+          "completedAt": "2026-08-31T19:53:58.487Z"
+        },
+        "response": "✓ Chrome browser opened successfully.",
+        "timestamp": "2026-08-31T19:53:58.480Z"
+      }
+    },
+    {
+      "testId": "E2E-COMP-004",
+      "name": "Open Notepad and type text",
+      "timestamp": "2026-08-31T19:53:59.715Z",
+      "userRequest": "Open Notepad and type text",
+      "status": "PASS",
+      "response": {
+        "id": "turn-1788206038805-2fccpejx1",
+        "input": "open Notepad and type 'Hello BOW'",
+        "plan": {
+          "id": "plan-1788206038805-tefvvuxwk",
+          "goal": "open Notepad and type 'Hello BOW'",
+          "steps": [
+            {
+              "id": "step-1",
+              "toolName": "open_application",
+              "input": {
+                "name": "notepad"
+              },
+              "description": "Open notepad",
+              "dependencies": [],
+              "retryCount": 0,
+              "maxRetries": 2,
+              "timeout": 30000
+            },
+            {
+              "id": "step-1",
+              "toolName": "keyboard_type",
+              "input": {
+                "text": "hello bow"
+              },
+              "description": "Type: hello bow",
+              "dependencies": [],
+              "retryCount": 0,
+              "maxRetries": 1,
+              "timeout": 5000
+            }
+          ],
+          "estimatedDuration": 35000,
+          "createdAt": "2026-08-31T19:53:58.805Z",
+          "updatedAt": "2026-08-31T19:53:58.806Z"
+        },
+        "execution": {
+          "planId": "plan-1788206038805-tefvvuxwk",
+          "goal": "open Notepad and type 'Hello BOW'",
+          "steps": [
+            {
+              "stepId": "step-1",
+              "toolName": "open_application",
+              "success": true,
+              "result": {
+                "success": true,
+                "tool": "open_application",
+                "input": {
+                  "name": "notepad"
+                },
+                "output": {
+                  "success": true,
+                  "action": "open_application",
+                  "result": {
+                    "name": "notepad",
+                    "executable": "notepad",
+                    "launched": true,
+                    "pid": 26056,
+                    "verified": true
+                  },
+                  "timestamp": "2026-08-31T19:53:59.040Z",
+                  "duration": 234
+                },
+                "context": {
+                  "sessionId": "e2e-1788206038803",
+                  "userId": "e2e-1788206038803",
+                  "timestamp": "2026-08-31T19:53:58.806Z",
+                  "requestId": "exec-step-1-0"
+                },
+                "duration": 235
+              },
+              "startTime": "2026-08-31T19:53:59.041Z",
+              "endTime": "2026-08-31T19:53:59.041Z",
+              "duration": 235,
+              "retries": 0
+            },
+            {
+              "stepId": "step-1",
+              "toolName": "keyboard_type",
+              "success": true,
+              "result": {
+                "success": true,
+                "tool": "keyboard_type",
+                "input": {
+                  "text": "hello bow"
+                },
+                "output": {
+                  "success": true,
+                  "action": "keyboard_type",
+                  "result": {
+                    "text": "hello bow",
+                    "length": 9,
+                    "delayMs": 50
+                  },
+                  "timestamp": "2026-08-31T19:53:59.439Z",
+                  "duration": 398
+                },
+                "context": {
+                  "sessionId": "e2e-1788206038803",
+                  "userId": "e2e-1788206038803",
+                  "timestamp": "2026-08-31T19:53:59.041Z",
+                  "requestId": "exec-step-1-0"
+                },
+                "duration": 398
+              },
+              "startTime": "2026-08-31T19:53:59.440Z",
+              "endTime": "2026-08-31T19:53:59.440Z",
+              "duration": 399,
+              "retries": 0
+            }
+          ],
+          "success": true,
+          "totalDuration": 634,
+          "completedAt": "2026-08-31T19:53:59.440Z"
+        },
+        "response": "✓ Text entered successfully.",
+        "timestamp": "2026-08-31T19:53:58.805Z"
+      }
+    },
+    {
+      "testId": "E2E-COMP-005",
+      "name": "Open Chrome and navigate",
+      "timestamp": "2026-08-31T19:53:59.717Z",
+      "userRequest": "Open Chrome and navigate",
+      "status": "SKIPPED",
+      "reason": "Browser controller is not yet certified in Step 2"
+    },
+    {
+      "testId": "E2E-COMP-006",
+      "name": "Remote Agent offline",
+      "timestamp": "2026-08-31T19:54:03.951Z",
+      "userRequest": "Remote Agent offline",
+      "status": "PASS",
+      "response": {
+        "id": "turn-1788206040288-dip0oeowi",
+        "input": "open Notepad",
+        "plan": {
+          "id": "plan-1788206040289-5ogninwmc",
+          "goal": "open Notepad",
+          "steps": [
+            {
+              "id": "step-1",
+              "toolName": "open_application",
+              "input": {
+                "name": "notepad"
+              },
+              "description": "Open notepad",
+              "dependencies": [],
+              "retryCount": 0,
+              "maxRetries": 2,
+              "timeout": 30000
+            }
+          ],
+          "estimatedDuration": 30000,
+          "createdAt": "2026-08-31T19:54:00.290Z",
+          "updatedAt": "2026-08-31T19:54:00.290Z"
+        },
+        "execution": {
+          "planId": "plan-1788206040289-5ogninwmc",
+          "goal": "open Notepad",
+          "steps": [
+            {
+              "stepId": "step-1",
+              "toolName": "open_application",
+              "success": false,
+              "result": {
+                "success": false,
+                "tool": "open_application",
+                "input": {
+                  "name": "notepad"
+                },
+                "output": null,
+                "error": "REMOTE_AGENT_OFFLINE",
+                "context": {
+                  "sessionId": "e2e-offline",
+                  "userId": "e2e-offline",
+                  "timestamp": "2026-08-31T19:54:03.309Z",
+                  "requestId": "exec-step-1-2"
+                },
+                "duration": 0
+              },
+              "startTime": "2026-08-31T19:54:03.309Z",
+              "endTime": "2026-08-31T19:54:03.310Z",
+              "duration": 3019,
+              "retries": 2,
+              "error": "REMOTE_AGENT_OFFLINE"
+            }
+          ],
+          "success": false,
+          "totalDuration": 3020,
+          "completedAt": "2026-08-31T19:54:03.310Z"
+        },
+        "response": "I attempted to execute your request but encountered issues: REMOTE_AGENT_OFFLINE. The plan had 1 steps, 0 succeeded.",
+        "timestamp": "2026-08-31T19:54:00.288Z"
+      },
+      "verification": {
+        "remoteAgentOffline": true,
+        "notepadProcessCountBefore": 2,
+        "notepadProcessCountAfter": 2
+      }
+    },
+    {
+      "testId": "E2E-COMP-007",
+      "name": "Invalid tool",
+      "timestamp": "2026-08-31T19:54:04.009Z",
+      "userRequest": "Invalid tool",
+      "status": "PASS",
+      "response": {
+        "executionAttempted": false,
+        "error": "Unknown tool: this_tool_does_not_exist"
+      }
+    },
+    {
+      "testId": "E2E-COMP-008",
+      "name": "Unauthorized Remote Agent",
+      "timestamp": "2026-08-31T19:54:05.547Z",
+      "userRequest": "Unauthorized Remote Agent",
+      "status": "PASS",
+      "authAttempt": {
+        "token": "[REDACTED]",
+        "expected": "rejected",
+        "agentExited": true
+      },
+      "serverResult": {
+        "remoteAgent": "offline"
+      },
+      "verification": {
+        "authenticated": false,
+        "toolExecutionAllowed": false
+      }
+    },
+    {
+      "testId": "E2E-COMP-009",
+      "name": "Verification failure",
+      "timestamp": "2026-08-31T19:54:05.559Z",
+      "userRequest": "Verification failure",
+      "status": "PASS",
+      "response": {
+        "success": false,
+        "error": "Invalid application name",
+        "verified": false
+      }
+    },
+    {
+      "testId": "E2E-COMP-010",
+      "name": "Dangerous action confirmation",
+      "timestamp": "2026-08-31T19:54:05.563Z",
+      "userRequest": "Dangerous action confirmation",
+      "status": "PASS",
+      "response": {
+        "executionAttempted": false,
+        "safetyDecision": {
+          "allowed": false,
+          "requiresConfirmation": true,
+          "level": "CONFIRM",
+          "reason": "User confirmation is required"
+        }
+      }
+    }
+  ]
+}

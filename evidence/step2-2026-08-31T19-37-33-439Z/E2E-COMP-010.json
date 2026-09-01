@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-010",
+  "name": "Dangerous action confirmation",
+  "timestamp": "2026-08-31T19:37:33.457Z",
+  "userRequest": "Dangerous action confirmation",
+  "status": "SKIPPED",
+  "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+}

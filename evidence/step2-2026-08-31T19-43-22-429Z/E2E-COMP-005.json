@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-005",
+  "name": "Open Chrome and navigate",
+  "timestamp": "2026-08-31T19:43:25.580Z",
+  "userRequest": "Open Chrome and navigate",
+  "status": "SKIPPED",
+  "reason": "Browser controller is not yet certified in Step 2"
+}

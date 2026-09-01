@@ -1,0 +1,69 @@
+{
+  "testId": "E2E-COMP-010",
+  "name": "Dangerous action confirmation",
+  "timestamp": "2026-08-31T19:43:26.638Z",
+  "userRequest": "Dangerous action confirmation",
+  "status": "BLOCKED",
+  "response": {
+    "id": "turn-1788205405587-uqjlz1yah",
+    "input": "run terminal command echo E2E",
+    "plan": {
+      "id": "plan-1788205405587-hznk2kq37",
+      "goal": "run terminal command echo E2E",
+      "steps": [
+        {
+          "id": "step-1",
+          "toolName": "terminal_execute",
+          "input": {
+            "command": "terminal command echo e2e"
+          },
+          "description": "Execute: terminal command echo e2e",
+          "dependencies": [],
+          "retryCount": 0,
+          "maxRetries": 1,
+          "timeout": 30000
+        }
+      ],
+      "estimatedDuration": 30000,
+      "createdAt": "2026-08-31T19:43:25.587Z",
+      "updatedAt": "2026-08-31T19:43:25.587Z"
+    },
+    "execution": {
+      "planId": "plan-1788205405587-hznk2kq37",
+      "goal": "run terminal command echo E2E",
+      "steps": [
+        {
+          "stepId": "step-1",
+          "toolName": "terminal_execute",
+          "success": false,
+          "result": {
+            "success": false,
+            "tool": "terminal_execute",
+            "input": {
+              "command": "terminal command echo e2e"
+            },
+            "output": null,
+            "error": "Confirmation required for terminal_execute",
+            "context": {
+              "sessionId": "e2e-1788205405585",
+              "userId": "e2e-1788205405585",
+              "timestamp": "2026-08-31T19:43:26.632Z",
+              "requestId": "exec-step-1-1"
+            },
+            "duration": 0
+          },
+          "startTime": "2026-08-31T19:43:26.634Z",
+          "endTime": "2026-08-31T19:43:26.634Z",
+          "duration": 1047,
+          "retries": 1,
+          "error": "Confirmation required for terminal_execute"
+        }
+      ],
+      "success": false,
+      "totalDuration": 1047,
+      "completedAt": "2026-08-31T19:43:26.634Z"
+    },
+    "response": "I attempted to execute your request but encountered issues: Confirmation required for terminal_execute. The plan had 1 steps, 0 succeeded.",
+    "timestamp": "2026-08-31T19:43:25.587Z"
+  }
+}

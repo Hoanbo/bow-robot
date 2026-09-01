@@ -1,0 +1,16 @@
+{
+  "testId": "E2E-COMP-010",
+  "name": "Dangerous action confirmation",
+  "timestamp": "2026-08-31T19:51:53.211Z",
+  "userRequest": "Dangerous action confirmation",
+  "status": "PASS",
+  "response": {
+    "executionAttempted": false,
+    "safetyDecision": {
+      "allowed": false,
+      "requiresConfirmation": true,
+      "level": "CONFIRM",
+      "reason": "User confirmation is required"
+    }
+  }
+}

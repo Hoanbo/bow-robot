@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-002",
+  "name": "Open Calculator",
+  "timestamp": "2026-08-31T19:37:33.446Z",
+  "userRequest": "Open Calculator",
+  "status": "SKIPPED",
+  "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+}

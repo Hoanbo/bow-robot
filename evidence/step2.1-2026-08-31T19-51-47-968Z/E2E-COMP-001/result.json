@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-001",
+  "name": "Open Notepad",
+  "timestamp": "2026-08-31T19:51:47.971Z",
+  "userRequest": "Open Notepad",
+  "status": "SKIPPED",
+  "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+}

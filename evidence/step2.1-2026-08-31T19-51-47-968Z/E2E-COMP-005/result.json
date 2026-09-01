@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-005",
+  "name": "Open Chrome and navigate",
+  "timestamp": "2026-08-31T19:51:47.981Z",
+  "userRequest": "Open Chrome and navigate",
+  "status": "SKIPPED",
+  "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+}

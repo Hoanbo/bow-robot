@@ -1,0 +1,72 @@
+{
+  "id": "turn-1788206037190-io8g2tn56",
+  "input": "open Notepad",
+  "plan": {
+    "id": "plan-1788206037190-ttb590xu4",
+    "goal": "open Notepad",
+    "steps": [
+      {
+        "id": "step-1",
+        "toolName": "open_application",
+        "input": {
+          "name": "notepad"
+        },
+        "description": "Open notepad",
+        "dependencies": [],
+        "retryCount": 0,
+        "maxRetries": 2,
+        "timeout": 30000
+      }
+    ],
+    "estimatedDuration": 30000,
+    "createdAt": "2026-08-31T19:53:57.190Z",
+    "updatedAt": "2026-08-31T19:53:57.190Z"
+  },
+  "execution": {
+    "planId": "plan-1788206037190-ttb590xu4",
+    "goal": "open Notepad",
+    "steps": [
+      {
+        "stepId": "step-1",
+        "toolName": "open_application",
+        "success": true,
+        "result": {
+          "success": true,
+          "tool": "open_application",
+          "input": {
+            "name": "notepad"
+          },
+          "output": {
+            "success": true,
+            "action": "open_application",
+            "result": {
+              "name": "notepad",
+              "executable": "notepad",
+              "launched": true,
+              "pid": 20300,
+              "verified": true
+            },
+            "timestamp": "2026-08-31T19:53:57.513Z",
+            "duration": 322
+          },
+          "context": {
+            "sessionId": "e2e-1788206037139",
+            "userId": "e2e-1788206037139",
+            "timestamp": "2026-08-31T19:53:57.190Z",
+            "requestId": "exec-step-1-0"
+          },
+          "duration": 323
+        },
+        "startTime": "2026-08-31T19:53:57.514Z",
+        "endTime": "2026-08-31T19:53:57.514Z",
+        "duration": 324,
+        "retries": 0
+      }
+    ],
+    "success": true,
+    "totalDuration": 324,
+    "completedAt": "2026-08-31T19:53:57.514Z"
+  },
+  "response": "✓ Task completed successfully. Executed 1 step(s) in 324ms.",
+  "timestamp": "2026-08-31T19:53:57.190Z"
+}

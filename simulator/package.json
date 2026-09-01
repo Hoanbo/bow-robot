@@ -1,0 +1,23 @@
+{
+    "name": "@bow/simulator",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "dev": "node --import tsx/esm dist/index.js",
+        "start": "node dist/index.js",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@bow/shared": "*",
+        "uuid": "^9.0.0",
+        "ws": "^8.14.2"
+    },
+    "devDependencies": {
+        "@types/node": "^20.5.1",
+        "@types/ws": "^8.5.5",
+        "tsx": "^3.14.0"
+    }
+}

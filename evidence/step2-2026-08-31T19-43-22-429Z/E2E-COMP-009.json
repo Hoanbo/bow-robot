@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-009",
+  "name": "Verification failure",
+  "timestamp": "2026-08-31T19:43:25.584Z",
+  "userRequest": "Verification failure",
+  "status": "SKIPPED",
+  "reason": "Requires a controlled missing executable fixture"
+}

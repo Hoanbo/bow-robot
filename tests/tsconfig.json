@@ -1,0 +1,32 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": ".",
+        "paths": {
+            "@bow/shared": [
+                "../shared/dist"
+            ],
+            "@bow/server": [
+                "../bow-server/dist"
+            ],
+            "@bow/server/*": [
+                "../bow-server/dist/*"
+            ],
+            "@bow/remote-agent": [
+                "../bow-remote-agent/dist"
+            ],
+            "@bow/remote-agent/*": [
+                "../bow-remote-agent/dist/*"
+            ]
+        }
+    },
+    "include": [
+        "./**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "src"
+    ]
+}

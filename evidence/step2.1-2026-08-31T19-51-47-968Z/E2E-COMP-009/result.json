@@ -1,0 +1,12 @@
+{
+  "testId": "E2E-COMP-009",
+  "name": "Verification failure",
+  "timestamp": "2026-08-31T19:51:53.205Z",
+  "userRequest": "Verification failure",
+  "status": "PASS",
+  "response": {
+    "success": false,
+    "error": "Invalid application name",
+    "verified": false
+  }
+}

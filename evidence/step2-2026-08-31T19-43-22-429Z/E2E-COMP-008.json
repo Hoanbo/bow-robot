@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-008",
+  "name": "Unauthorized Remote Agent",
+  "timestamp": "2026-08-31T19:43:25.583Z",
+  "userRequest": "Unauthorized Remote Agent",
+  "status": "SKIPPED",
+  "reason": "Requires an isolated server instance and invalid-token agent"
+}

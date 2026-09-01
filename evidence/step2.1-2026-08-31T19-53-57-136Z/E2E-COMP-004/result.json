@@ -1,0 +1,125 @@
+{
+  "testId": "E2E-COMP-004",
+  "name": "Open Notepad and type text",
+  "timestamp": "2026-08-31T19:53:59.715Z",
+  "userRequest": "Open Notepad and type text",
+  "status": "PASS",
+  "response": {
+    "id": "turn-1788206038805-2fccpejx1",
+    "input": "open Notepad and type 'Hello BOW'",
+    "plan": {
+      "id": "plan-1788206038805-tefvvuxwk",
+      "goal": "open Notepad and type 'Hello BOW'",
+      "steps": [
+        {
+          "id": "step-1",
+          "toolName": "open_application",
+          "input": {
+            "name": "notepad"
+          },
+          "description": "Open notepad",
+          "dependencies": [],
+          "retryCount": 0,
+          "maxRetries": 2,
+          "timeout": 30000
+        },
+        {
+          "id": "step-1",
+          "toolName": "keyboard_type",
+          "input": {
+            "text": "hello bow"
+          },
+          "description": "Type: hello bow",
+          "dependencies": [],
+          "retryCount": 0,
+          "maxRetries": 1,
+          "timeout": 5000
+        }
+      ],
+      "estimatedDuration": 35000,
+      "createdAt": "2026-08-31T19:53:58.805Z",
+      "updatedAt": "2026-08-31T19:53:58.806Z"
+    },
+    "execution": {
+      "planId": "plan-1788206038805-tefvvuxwk",
+      "goal": "open Notepad and type 'Hello BOW'",
+      "steps": [
+        {
+          "stepId": "step-1",
+          "toolName": "open_application",
+          "success": true,
+          "result": {
+            "success": true,
+            "tool": "open_application",
+            "input": {
+              "name": "notepad"
+            },
+            "output": {
+              "success": true,
+              "action": "open_application",
+              "result": {
+                "name": "notepad",
+                "executable": "notepad",
+                "launched": true,
+                "pid": 26056,
+                "verified": true
+              },
+              "timestamp": "2026-08-31T19:53:59.040Z",
+              "duration": 234
+            },
+            "context": {
+              "sessionId": "e2e-1788206038803",
+              "userId": "e2e-1788206038803",
+              "timestamp": "2026-08-31T19:53:58.806Z",
+              "requestId": "exec-step-1-0"
+            },
+            "duration": 235
+          },
+          "startTime": "2026-08-31T19:53:59.041Z",
+          "endTime": "2026-08-31T19:53:59.041Z",
+          "duration": 235,
+          "retries": 0
+        },
+        {
+          "stepId": "step-1",
+          "toolName": "keyboard_type",
+          "success": true,
+          "result": {
+            "success": true,
+            "tool": "keyboard_type",
+            "input": {
+              "text": "hello bow"
+            },
+            "output": {
+              "success": true,
+              "action": "keyboard_type",
+              "result": {
+                "text": "hello bow",
+                "length": 9,
+                "delayMs": 50
+              },
+              "timestamp": "2026-08-31T19:53:59.439Z",
+              "duration": 398
+            },
+            "context": {
+              "sessionId": "e2e-1788206038803",
+              "userId": "e2e-1788206038803",
+              "timestamp": "2026-08-31T19:53:59.041Z",
+              "requestId": "exec-step-1-0"
+            },
+            "duration": 398
+          },
+          "startTime": "2026-08-31T19:53:59.440Z",
+          "endTime": "2026-08-31T19:53:59.440Z",
+          "duration": 399,
+          "retries": 0
+        }
+      ],
+      "success": true,
+      "totalDuration": 634,
+      "completedAt": "2026-08-31T19:53:59.440Z"
+    },
+    "response": "✓ Text entered successfully.",
+    "timestamp": "2026-08-31T19:53:58.805Z"
+  }
+}

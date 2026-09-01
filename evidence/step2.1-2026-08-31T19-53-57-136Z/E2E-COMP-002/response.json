@@ -1,0 +1,72 @@
+{
+  "id": "turn-1788206037913-a2osrr41c",
+  "input": "open Calculator",
+  "plan": {
+    "id": "plan-1788206037913-jslq2259c",
+    "goal": "open Calculator",
+    "steps": [
+      {
+        "id": "step-1",
+        "toolName": "open_application",
+        "input": {
+          "name": "calculator"
+        },
+        "description": "Open calculator",
+        "dependencies": [],
+        "retryCount": 0,
+        "maxRetries": 2,
+        "timeout": 30000
+      }
+    ],
+    "estimatedDuration": 30000,
+    "createdAt": "2026-08-31T19:53:57.913Z",
+    "updatedAt": "2026-08-31T19:53:57.913Z"
+  },
+  "execution": {
+    "planId": "plan-1788206037913-jslq2259c",
+    "goal": "open Calculator",
+    "steps": [
+      {
+        "stepId": "step-1",
+        "toolName": "open_application",
+        "success": true,
+        "result": {
+          "success": true,
+          "tool": "open_application",
+          "input": {
+            "name": "calculator"
+          },
+          "output": {
+            "success": true,
+            "action": "open_application",
+            "result": {
+              "name": "calculator",
+              "executable": "calc",
+              "launched": true,
+              "pid": 35164,
+              "verified": true
+            },
+            "timestamp": "2026-08-31T19:53:58.164Z",
+            "duration": 250
+          },
+          "context": {
+            "sessionId": "e2e-1788206037911",
+            "userId": "e2e-1788206037911",
+            "timestamp": "2026-08-31T19:53:57.913Z",
+            "requestId": "exec-step-1-0"
+          },
+          "duration": 252
+        },
+        "startTime": "2026-08-31T19:53:58.165Z",
+        "endTime": "2026-08-31T19:53:58.165Z",
+        "duration": 252,
+        "retries": 0
+      }
+    ],
+    "success": true,
+    "totalDuration": 252,
+    "completedAt": "2026-08-31T19:53:58.165Z"
+  },
+  "response": "✓ Task completed successfully. Executed 1 step(s) in 252ms.",
+  "timestamp": "2026-08-31T19:53:57.913Z"
+}

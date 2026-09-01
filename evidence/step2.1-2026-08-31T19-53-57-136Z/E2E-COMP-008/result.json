@@ -1,0 +1,19 @@
+{
+  "testId": "E2E-COMP-008",
+  "name": "Unauthorized Remote Agent",
+  "timestamp": "2026-08-31T19:54:05.547Z",
+  "userRequest": "Unauthorized Remote Agent",
+  "status": "PASS",
+  "authAttempt": {
+    "token": "[REDACTED]",
+    "expected": "rejected",
+    "agentExited": true
+  },
+  "serverResult": {
+    "remoteAgent": "offline"
+  },
+  "verification": {
+    "authenticated": false,
+    "toolExecutionAllowed": false
+  }
+}

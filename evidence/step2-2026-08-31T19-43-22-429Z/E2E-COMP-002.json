@@ -1,0 +1,79 @@
+{
+  "testId": "E2E-COMP-002",
+  "name": "Open Calculator",
+  "timestamp": "2026-08-31T19:43:23.847Z",
+  "userRequest": "Open Calculator",
+  "status": "PASS",
+  "response": {
+    "id": "turn-1788205403213-35zzexils",
+    "input": "open Calculator",
+    "plan": {
+      "id": "plan-1788205403213-lkw0dvx06",
+      "goal": "open Calculator",
+      "steps": [
+        {
+          "id": "step-1",
+          "toolName": "open_application",
+          "input": {
+            "name": "calculator"
+          },
+          "description": "Open calculator",
+          "dependencies": [],
+          "retryCount": 0,
+          "maxRetries": 2,
+          "timeout": 30000
+        }
+      ],
+      "estimatedDuration": 30000,
+      "createdAt": "2026-08-31T19:43:23.214Z",
+      "updatedAt": "2026-08-31T19:43:23.214Z"
+    },
+    "execution": {
+      "planId": "plan-1788205403213-lkw0dvx06",
+      "goal": "open Calculator",
+      "steps": [
+        {
+          "stepId": "step-1",
+          "toolName": "open_application",
+          "success": true,
+          "result": {
+            "success": true,
+            "tool": "open_application",
+            "input": {
+              "name": "calculator"
+            },
+            "output": {
+              "success": true,
+              "action": "open_application",
+              "result": {
+                "name": "calculator",
+                "executable": "calc",
+                "launched": true,
+                "pid": 33464,
+                "verified": true
+              },
+              "timestamp": "2026-08-31T19:43:23.499Z",
+              "duration": 285
+            },
+            "context": {
+              "sessionId": "e2e-1788205403211",
+              "userId": "e2e-1788205403211",
+              "timestamp": "2026-08-31T19:43:23.214Z",
+              "requestId": "exec-step-1-0"
+            },
+            "duration": 286
+          },
+          "startTime": "2026-08-31T19:43:23.500Z",
+          "endTime": "2026-08-31T19:43:23.500Z",
+          "duration": 286,
+          "retries": 0
+        }
+      ],
+      "success": true,
+      "totalDuration": 286,
+      "completedAt": "2026-08-31T19:43:23.500Z"
+    },
+    "response": "✓ Task completed successfully. Executed 1 step(s) in 286ms.",
+    "timestamp": "2026-08-31T19:43:23.213Z"
+  }
+}

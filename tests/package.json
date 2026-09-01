@@ -1,0 +1,20 @@
+{
+    "name": "@bow/tests",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "test": "node dist/phase-remaining.test.js",
+        "build": "tsc",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@bow/shared": "*",
+        "@bow/server": "*",
+        "@bow/remote-agent": "*"
+    },
+    "devDependencies": {
+        "@types/node": "^20.5.1",
+        "tsx": "^3.14.0"
+    }
+}

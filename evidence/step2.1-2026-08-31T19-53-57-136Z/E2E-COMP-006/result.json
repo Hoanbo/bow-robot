@@ -1,0 +1,74 @@
+{
+  "testId": "E2E-COMP-006",
+  "name": "Remote Agent offline",
+  "timestamp": "2026-08-31T19:54:03.951Z",
+  "userRequest": "Remote Agent offline",
+  "status": "PASS",
+  "response": {
+    "id": "turn-1788206040288-dip0oeowi",
+    "input": "open Notepad",
+    "plan": {
+      "id": "plan-1788206040289-5ogninwmc",
+      "goal": "open Notepad",
+      "steps": [
+        {
+          "id": "step-1",
+          "toolName": "open_application",
+          "input": {
+            "name": "notepad"
+          },
+          "description": "Open notepad",
+          "dependencies": [],
+          "retryCount": 0,
+          "maxRetries": 2,
+          "timeout": 30000
+        }
+      ],
+      "estimatedDuration": 30000,
+      "createdAt": "2026-08-31T19:54:00.290Z",
+      "updatedAt": "2026-08-31T19:54:00.290Z"
+    },
+    "execution": {
+      "planId": "plan-1788206040289-5ogninwmc",
+      "goal": "open Notepad",
+      "steps": [
+        {
+          "stepId": "step-1",
+          "toolName": "open_application",
+          "success": false,
+          "result": {
+            "success": false,
+            "tool": "open_application",
+            "input": {
+              "name": "notepad"
+            },
+            "output": null,
+            "error": "REMOTE_AGENT_OFFLINE",
+            "context": {
+              "sessionId": "e2e-offline",
+              "userId": "e2e-offline",
+              "timestamp": "2026-08-31T19:54:03.309Z",
+              "requestId": "exec-step-1-2"
+            },
+            "duration": 0
+          },
+          "startTime": "2026-08-31T19:54:03.309Z",
+          "endTime": "2026-08-31T19:54:03.310Z",
+          "duration": 3019,
+          "retries": 2,
+          "error": "REMOTE_AGENT_OFFLINE"
+        }
+      ],
+      "success": false,
+      "totalDuration": 3020,
+      "completedAt": "2026-08-31T19:54:03.310Z"
+    },
+    "response": "I attempted to execute your request but encountered issues: REMOTE_AGENT_OFFLINE. The plan had 1 steps, 0 succeeded.",
+    "timestamp": "2026-08-31T19:54:00.288Z"
+  },
+  "verification": {
+    "remoteAgentOffline": true,
+    "notepadProcessCountBefore": 2,
+    "notepadProcessCountAfter": 2
+  }
+}

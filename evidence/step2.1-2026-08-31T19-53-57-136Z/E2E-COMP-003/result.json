@@ -1,0 +1,79 @@
+{
+  "testId": "E2E-COMP-003",
+  "name": "Open Chrome",
+  "timestamp": "2026-08-31T19:53:58.799Z",
+  "userRequest": "Open Chrome",
+  "status": "PASS",
+  "response": {
+    "id": "turn-1788206038480-bjvo812dd",
+    "input": "open Chrome",
+    "plan": {
+      "id": "plan-1788206038480-enyvaf243",
+      "goal": "open Chrome",
+      "steps": [
+        {
+          "id": "step-1",
+          "toolName": "open_chrome",
+          "input": {
+            "url": "https://www.google.com"
+          },
+          "description": "Open browser to Google",
+          "dependencies": [],
+          "retryCount": 0,
+          "maxRetries": 2,
+          "timeout": 30000
+        }
+      ],
+      "estimatedDuration": 30000,
+      "createdAt": "2026-08-31T19:53:58.480Z",
+      "updatedAt": "2026-08-31T19:53:58.480Z"
+    },
+    "execution": {
+      "planId": "plan-1788206038480-enyvaf243",
+      "goal": "open Chrome",
+      "steps": [
+        {
+          "stepId": "step-1",
+          "toolName": "open_chrome",
+          "success": true,
+          "result": {
+            "success": true,
+            "tool": "open_chrome",
+            "input": {
+              "url": "https://www.google.com"
+            },
+            "output": {
+              "success": true,
+              "action": "open_application",
+              "result": {
+                "name": "chrome",
+                "executable": "chrome",
+                "launched": true,
+                "pid": 24096,
+                "verified": false
+              },
+              "timestamp": "2026-08-31T19:53:58.486Z",
+              "duration": 5
+            },
+            "context": {
+              "sessionId": "e2e-1788206038478",
+              "userId": "e2e-1788206038478",
+              "timestamp": "2026-08-31T19:53:58.480Z",
+              "requestId": "exec-step-1-0"
+            },
+            "duration": 6
+          },
+          "startTime": "2026-08-31T19:53:58.487Z",
+          "endTime": "2026-08-31T19:53:58.487Z",
+          "duration": 7,
+          "retries": 0
+        }
+      ],
+      "success": true,
+      "totalDuration": 7,
+      "completedAt": "2026-08-31T19:53:58.487Z"
+    },
+    "response": "✓ Chrome browser opened successfully.",
+    "timestamp": "2026-08-31T19:53:58.480Z"
+  }
+}

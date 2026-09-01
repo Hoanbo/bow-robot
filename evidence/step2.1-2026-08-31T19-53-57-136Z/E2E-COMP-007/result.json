@@ -1,0 +1,11 @@
+{
+  "testId": "E2E-COMP-007",
+  "name": "Invalid tool",
+  "timestamp": "2026-08-31T19:54:04.009Z",
+  "userRequest": "Invalid tool",
+  "status": "PASS",
+  "response": {
+    "executionAttempted": false,
+    "error": "Unknown tool: this_tool_does_not_exist"
+  }
+}

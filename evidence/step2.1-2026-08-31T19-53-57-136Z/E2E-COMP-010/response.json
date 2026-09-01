@@ -1,0 +1,9 @@
+{
+  "executionAttempted": false,
+  "safetyDecision": {
+    "allowed": false,
+    "requiresConfirmation": true,
+    "level": "CONFIRM",
+    "reason": "User confirmation is required"
+  }
+}

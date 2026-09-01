@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-007",
+  "name": "Invalid tool",
+  "timestamp": "2026-08-31T19:37:33.453Z",
+  "userRequest": "Invalid tool",
+  "status": "SKIPPED",
+  "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+}

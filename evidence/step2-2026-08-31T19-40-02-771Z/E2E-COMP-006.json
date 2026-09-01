@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-006",
+  "name": "Remote Agent offline",
+  "timestamp": "2026-08-31T19:40:02.782Z",
+  "userRequest": "Remote Agent offline",
+  "status": "SKIPPED",
+  "reason": "Set BOW_E2E_ENABLED=true and BOW_E2E_ALLOW_DESKTOP_CONTROL=true to enable real desktop control"
+}

@@ -1,0 +1,8 @@
+{
+  "testId": "E2E-COMP-006",
+  "name": "Remote Agent offline",
+  "timestamp": "2026-08-31T19:43:25.581Z",
+  "userRequest": "Remote Agent offline",
+  "status": "SKIPPED",
+  "reason": "Run with a separately stopped Remote Agent to certify offline behavior"
+}
