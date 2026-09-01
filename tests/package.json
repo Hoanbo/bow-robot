@@ -4,14 +4,15 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "test": "node dist/phase-remaining.test.js",
+        "test": "node dist/v3.3-ecosystem.test.js",
         "build": "tsc",
         "clean": "rm -rf dist"
     },
     "dependencies": {
         "@bow/shared": "*",
         "@bow/server": "*",
-        "@bow/remote-agent": "*"
+        "@bow/remote-agent": "*",
+        "@bow/simulator": "*"
     },
     "devDependencies": {
         "@types/node": "^20.5.1",

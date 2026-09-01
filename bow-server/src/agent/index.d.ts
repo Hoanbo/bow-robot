@@ -1,19 +1,20 @@
 /**
- * AI Agent
- * Main coordinator for natural language processing and execution
+ * BOW Server - AI Agent Coordinator
+ * Decoupled Brain Bridge: delegates natural language reasoning & intent routing
+ * to BOW Agent V3.3 Brain Gateway (Port 4000), coordinating Desktop Actions with bow-remote-agent.
  */
-import { Logger } from "@bow/shared";
+import { Logger, RobotExpression } from "@bow/shared";
 import ToolRegistry from "../tools/registry.js";
 import ToolExecutor from "../tools/executor.js";
-import { Plan } from "./planner.js";
-import { ExecutionPlanResult } from "./executor.js";
 export interface ConversationTurn {
     id: string;
     input: string;
-    plan?: Plan;
-    execution?: ExecutionPlanResult;
     response: string;
+    expression?: RobotExpression;
+    actions?: any[];
+    desktopAction?: any;
     timestamp: string;
+    success?: boolean;
 }
 export interface Conversation {
     id: string;
@@ -26,14 +27,11 @@ export declare class AIAgent {
     private logger;
     private registry;
     private toolExecutor;
-    private planner;
-    private executor;
+    private brainClient;
     private conversations;
-    private sessionTimeout;
     constructor(logger: Logger, registry: ToolRegistry, toolExecutor: ToolExecutor);
     processInput(input: string, sessionId?: string): Promise<ConversationTurn>;
-    private parseIntent;
-    private generateResponse;
+    private executeDesktopAction;
     getConversation(sessionId: string): Conversation | undefined;
     getConversations(): Conversation[];
     deleteConversation(sessionId: string): boolean;

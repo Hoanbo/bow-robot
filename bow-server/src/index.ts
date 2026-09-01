@@ -8,6 +8,14 @@ import { ConfigLoader, ServerConfig } from "./config.js";
 import BOWServer from "./server.js";
 import process from "process";
 
+export { ConfigLoader, ServerConfig } from "./config.js";
+export { BOWServer } from "./server.js";
+export { AIAgent } from "./agent/index.js";
+export { ToolRegistry } from "./tools/registry.js";
+export { ToolExecutor } from "./tools/executor.js";
+export { EdgeTTSSpeechProvider, WhisperSTTProvider, UnifiedSpeechProvider } from "./speech.js";
+export { RobotGateway } from "./robot.js";
+
 let server: BOWServer | null = null;
 let config: ServerConfig;
 let logger: Logger;

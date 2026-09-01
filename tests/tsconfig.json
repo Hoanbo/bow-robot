@@ -5,19 +5,32 @@
         "rootDir": ".",
         "paths": {
             "@bow/shared": [
-                "../shared/dist"
+                "../shared/dist",
+                "../shared/src"
             ],
             "@bow/server": [
-                "../bow-server/dist"
+                "../bow-server/dist",
+                "../bow-server/src"
             ],
             "@bow/server/*": [
-                "../bow-server/dist/*"
+                "../bow-server/dist/*",
+                "../bow-server/src/*"
             ],
             "@bow/remote-agent": [
-                "../bow-remote-agent/dist"
+                "../bow-remote-agent/dist",
+                "../bow-remote-agent/src"
             ],
             "@bow/remote-agent/*": [
-                "../bow-remote-agent/dist/*"
+                "../bow-remote-agent/dist/*",
+                "../bow-remote-agent/src/*"
+            ],
+            "@bow/simulator": [
+                "../simulator/dist",
+                "../simulator/src"
+            ],
+            "@bow/simulator/*": [
+                "../simulator/dist/*",
+                "../simulator/src/*"
             ]
         }
     },
@@ -26,7 +39,6 @@
     ],
     "exclude": [
         "node_modules",
-        "dist",
-        "src"
+        "dist"
     ]
 }

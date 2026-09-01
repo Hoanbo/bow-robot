@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOW ROBOT — Virtual Desktop Robot & OLED Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-group">
+                <div class="status-dot connected" id="status-dot"></div>
+                <h1>BOW ROBOT V3.3</h1>
+                <span class="badge">VIRTUAL SIMULATOR</span>
+            </div>
+            <div class="system-stats">
+                <span class="stat-item" id="gateway-status">GATEWAY: CONNECTED</span>
+                <span class="stat-item" id="fps-counter">60 FPS</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            <!-- Left: Robot Physical Simulation Head -->
+            <section class="robot-face-card">
+                <div class="oled-frame">
+                    <div class="oled-header">
+                        <span class="oled-label">SSD1306 OLED (128x64)</span>
+                        <span class="oled-res">1-BIT MONOCHROME / CYAN</span>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="oled-canvas" width="512" height="256"></canvas>
+                        <div class="scanlines"></div>
+                    </div>
+                    <div class="oled-footer">
+                        <span id="current-expression-label">EXPRESSION: NEUTRAL</span>
+                        <span id="current-mode-label">MODE: IDLE</span>
+                    </div>
+                </div>
+
+                <!-- Servo & Head Angle Visualizer -->
+                <div class="servo-controls">
+                    <div class="servo-item">
+                        <label>PAN (SERVO 1): <span id="pan-val">0°</span></label>
+                        <input type="range" id="pan-slider" min="-90" max="90" value="0">
+                    </div>
+                    <div class="servo-item">
+                        <label>TILT (SERVO 2): <span id="tilt-val">0°</span></label>
+                        <input type="range" id="tilt-slider" min="-45" max="45" value="0">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right: Interactive Control & Speech Telemetry -->
+            <section class="control-panel">
+                <!-- Voice & Audio Bridge -->
+                <div class="panel-box audio-box">
+                    <h3>🎤 TIẾNG VIỆT SPEECH INTERFACE</h3>
+                    <div class="audio-actions">
+                        <button id="mic-btn" class="btn btn-mic">
+                            <span class="mic-icon">🎙️</span>
+                            <span id="mic-btn-text">BẤM ĐỂ NÓI (MIC)</span>
+                        </button>
+                        <button id="listen-toggle-btn" class="btn btn-secondary">
+                            <span>VAD AUTO-LISTEN</span>
+                        </button>
+                    </div>
+                    <div class="audio-meter">
+                        <div class="audio-level-bar" id="audio-level-bar"></div>
+                    </div>
+                    <div class="stt-preview" id="stt-preview">
+                        <em>Nói tiếng Việt (ví dụ: "Chào bạn", "Mở Chrome", "Mở Photoshop", "Giá Canva bao nhiêu?")...</em>
+                    </div>
+                </div>
+
+                <!-- Manual Query Input -->
+                <div class="panel-box query-box">
+                    <h3>💬 GỬI LỆNH TRỰC TIẾP TỚI BOW AGENT</h3>
+                    <form id="query-form" class="query-form">
+                        <input type="text" id="query-input" placeholder="Nhập câu hỏi hoặc lệnh máy tính..." autocomplete="off">
+                        <button type="submit" class="btn btn-primary">GỬI</button>
+                    </form>
+                </div>
+
+                <!-- Expression Switcher -->
+                <div class="panel-box expression-box">
+                    <h3>🎭 KIỂM THỬ BIỂU CẢM MẮT (ANIMATED EYES)</h3>
+                    <div class="expression-btn-grid">
+                        <button class="btn-exp" data-exp="neutral">🙂 NEUTRAL</button>
+                        <button class="btn-exp" data-exp="happy">😊 HAPPY</button>
+                        <button class="btn-exp" data-exp="blink">😉 BLINK</button>
+                        <button class="btn-exp" data-exp="thinking">🤔 THINKING</button>
+                        <button class="btn-exp" data-exp="surprised">😲 SURPRISED</button>
+                        <button class="btn-exp" data-exp="sleeping">😴 SLEEPING</button>
+                        <button class="btn-exp" data-exp="listening">👂 LISTENING</button>
+                        <button class="btn-exp" data-exp="speaking">🗣️ SPEAKING</button>
+                    </div>
+                </div>
+
+                <!-- Live Telemetry Console -->
+                <div class="panel-box log-box">
+                    <div class="log-header">
+                        <h3>📟 REALTIME TELEMETRY LOG</h3>
+                        <button id="clear-log-btn" class="btn-sm">Xóa</button>
+                    </div>
+                    <div class="log-content" id="log-content"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

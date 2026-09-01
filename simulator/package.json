@@ -4,6 +4,10 @@
     "private": true,
     "type": "module",
     "main": "dist/index.js",
+    "exports": {
+        ".": "./dist/index.js",
+        "./*": "./dist/*"
+    },
     "scripts": {
         "build": "tsc",
         "dev": "node --import tsx/esm dist/index.js",

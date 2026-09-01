@@ -29,6 +29,7 @@ import { JsonMemoryProvider } from "./memory.js";
 import { SafetyPolicy } from "./safety.js";
 import BowTestRunner from "./bow-test.js";
 import crypto from "crypto";
+import { RobotGateway } from "./robot.js";
 
 export interface ClientConnection {
     id: string;
@@ -53,6 +54,7 @@ export class BOWServer {
     private speech: OpenAISpeechProvider;
     private vision: MetadataVisionProvider;
     private memory: JsonMemoryProvider;
+    private robotGateway: RobotGateway;
     private safety = new SafetyPolicy();
 
     constructor(config: ServerConfig, logger: Logger) {
@@ -61,6 +63,7 @@ export class BOWServer {
         this.registry = new ToolRegistry(logger);
         this.toolExecutor = new ToolExecutor(logger, this.registry, this, this.safety);
         this.agent = new AIAgent(logger, this.registry, this.toolExecutor);
+        this.robotGateway = new RobotGateway(logger);
         this.speech = new OpenAISpeechProvider(logger, {
             sttApiKey: config.sttApiKey,
             ttsApiKey: config.ttsApiKey,
@@ -95,6 +98,9 @@ export class BOWServer {
 
             // Start listening
             await this.listen();
+
+            // Connect to Robot Gateway (Simulator / ESP32)
+            void this.robotGateway.connect();
 
             this.logger.info("BOW Server started successfully", {
                 wsEndpoint: `ws://${this.config.host}:${this.config.port}/ws`,

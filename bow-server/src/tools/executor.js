@@ -3,13 +3,15 @@
  * Handles tool execution with proper error handling and remote agent communication
  */
 import { getCurrentTimestamp } from "@bow/shared";
+import { SafetyPolicy } from "../safety.js";
 export class ToolExecutor {
-    constructor(logger, registry, server) {
+    constructor(logger, registry, server, safety) {
         this.executionHistory = [];
         this.maxHistorySize = 1000;
         this.logger = logger;
         this.registry = registry;
         this.server = server;
+        this.safety = safety || new SafetyPolicy();
     }
     async execute(toolName, input, context) {
         const startTime = Date.now();
@@ -32,8 +34,14 @@ export class ToolExecutor {
             if (tool.permission === "BLOCKED") {
                 throw new Error(`Tool is blocked: ${toolName}`);
             }
-            // Step 4: Send to remote agent and get result
-            const result = await this.executeOnAgent(tool, input, context);
+            const confirmed = typeof input === "object" && input !== null && input.__confirmed === true;
+            const safety = this.safety.assess(tool.name, tool.permission, confirmed);
+            if (!safety.allowed)
+                throw new Error(safety.requiresConfirmation ? `Confirmation required for ${toolName}` : safety.reason || "Safety policy denied tool");
+            // Server-local adapters (for example BOW TEST) do not cross the LAN.
+            const result = tool.category === "test" && tool.handler
+                ? await tool.handler(input)
+                : await this.executeOnAgent(tool, input, context);
             // Step 5: Store in history
             const execution = {
                 success: result.success,
@@ -70,15 +78,10 @@ export class ToolExecutor {
         }
     }
     async executeOnAgent(tool, input, context) {
-        // TODO: Send to remote agent and wait for result
-        // For now, return mock result
-        return {
-            success: true,
-            action: tool.name,
-            result: {},
-            timestamp: getCurrentTimestamp(),
-            duration: 0,
-        };
+        if (!this.server || typeof this.server.executeOnRemoteAgent !== "function") {
+            throw new Error("Remote agent gateway is not configured");
+        }
+        return this.server.executeOnRemoteAgent(tool.name, input, context.sessionId, context.requestId);
     }
     addToHistory(execution) {
         this.executionHistory.push(execution);

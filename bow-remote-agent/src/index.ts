@@ -199,6 +199,8 @@ async function executeRemoteTool(tool: string, args: Record<string, unknown>, c:
         case "file_search": return c.files.searchFiles(String(args.pattern), args.path as string | undefined);
         case "terminal_execute": return c.terminal.execute(String(args.command), { cwd: args.cwd as string | undefined, timeout: args.timeout as number | undefined });
         case "terminal_get_info": return c.terminal.getPlatform();
+        case "system_shutdown": return c.terminal.execute(process.platform === "win32" ? "shutdown /s /t 60" : "shutdown -h +1");
+        case "system_restart": return c.terminal.execute(process.platform === "win32" ? "shutdown /r /t 60" : "shutdown -r +1");
         default: throw new Error(`Unsupported remote tool: ${tool}`);
     }
 }

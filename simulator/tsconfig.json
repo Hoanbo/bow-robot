@@ -5,7 +5,8 @@
         "rootDir": "./src",
         "paths": {
             "@bow/shared": [
-                "../../shared/dist"
+                "../shared/dist",
+                "../shared/src"
             ]
         }
     },

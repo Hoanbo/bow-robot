@@ -150,11 +150,27 @@ export class ToolRegistry {
                 properties: {},
             },
         });
+        this.register({
+            name: "focus_window",
+            category: "applications",
+            permission: PERMISSION_LEVELS.SAFE,
+            description: "Focus a visible application window",
+            handler: async () => ({ success: true }),
+            schema: { type: "object", properties: { name: { type: "string", description: "Window or application name" } }, required: ["name"] },
+        });
+        this.register({
+            name: "get_windows",
+            category: "applications",
+            permission: PERMISSION_LEVELS.SAFE,
+            description: "List visible application windows",
+            handler: async () => ({ success: true }),
+            schema: { type: "object", properties: {} },
+        });
         // Application tools
         this.register({
             name: "open_application",
             category: "applications",
-            permission: PERMISSION_LEVELS.CONFIRM,
+            permission: PERMISSION_LEVELS.SAFE,
             description: "Open an application",
             handler: async () => ({ success: true }),
             schema: {
@@ -172,7 +188,7 @@ export class ToolRegistry {
         this.register({
             name: "open_chrome",
             category: "applications",
-            permission: PERMISSION_LEVELS.CONFIRM,
+            permission: PERMISSION_LEVELS.SAFE,
             description: "Open Chrome browser",
             handler: async () => ({ success: true }),
             schema: {
@@ -185,7 +201,7 @@ export class ToolRegistry {
         this.register({
             name: "close_application",
             category: "applications",
-            permission: PERMISSION_LEVELS.CONFIRM,
+            permission: PERMISSION_LEVELS.SAFE,
             description: "Close an application",
             handler: async () => ({ success: true }),
             schema: {
@@ -200,7 +216,7 @@ export class ToolRegistry {
         this.register({
             name: "browser_open",
             category: "browser",
-            permission: PERMISSION_LEVELS.CONFIRM,
+            permission: PERMISSION_LEVELS.SAFE,
             description: "Open web browser to URL",
             handler: async () => ({ success: true }),
             schema: {

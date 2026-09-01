@@ -1,25 +1,24 @@
 /**
- * AI Agent
- * Main coordinator for natural language processing and execution
+ * BOW Server - AI Agent Coordinator
+ * Decoupled Brain Bridge: delegates natural language reasoning & intent routing
+ * to BOW Agent V3.3 Brain Gateway (Port 4000), coordinating Desktop Actions with bow-remote-agent.
  */
 import { getCurrentTimestamp, generateSessionId } from "@bow/shared";
-import Planner from "./planner.js";
-import AgentExecutor from "./executor.js";
+import BowAgentClient from "./bowAgentClient.js";
 export class AIAgent {
     constructor(logger, registry, toolExecutor) {
         this.conversations = new Map();
-        this.sessionTimeout = 3600000; // 1 hour
         this.logger = logger;
         this.registry = registry;
         this.toolExecutor = toolExecutor;
-        this.planner = new Planner(logger, registry);
-        this.executor = new AgentExecutor(logger, toolExecutor, this.planner);
+        this.brainClient = new BowAgentClient(logger);
+        void this.brainClient.connect();
     }
     async processInput(input, sessionId) {
         const turnId = `turn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const session = sessionId || generateSessionId();
         const timestamp = getCurrentTimestamp();
-        this.logger.info("Processing user input", {
+        this.logger.info("Processing user input via BOW Agent Brain", {
             turnId,
             sessionId: session,
             inputLength: input.length,
@@ -36,37 +35,34 @@ export class AIAgent {
                     lastActivity: timestamp,
                 };
                 this.conversations.set(session, conversation);
-                this.logger.debug("New conversation created", { sessionId: session });
             }
-            // Step 1: Understand intent (parse input)
-            this.logger.debug("Parsing input");
-            const intent = this.parseIntent(input);
-            // Step 2: Create plan
-            this.logger.debug("Creating plan", { intent });
-            const plan = this.planner.plan(intent);
-            // Step 3: Execute plan
-            this.logger.debug("Executing plan", { planId: plan.id });
-            const execution = await this.executor.execute(plan, {
-                sessionId: session,
-                userId: session,
-            });
-            // Step 4: Generate response
-            const response = this.generateResponse(input, plan, execution);
-            // Store turn in conversation
+            // Route query to BOW Agent Brain Gateway (Port 4000)
+            const brainResponse = await this.brainClient.query(input, session);
+            // If brain responded with a desktop action, execute it via ToolExecutor / RemoteAgent
+            if (brainResponse.desktopAction) {
+                this.logger.info("Brain triggered Desktop Action", { action: brainResponse.desktopAction });
+                try {
+                    await this.executeDesktopAction(brainResponse.desktopAction, session);
+                }
+                catch (actionErr) {
+                    this.logger.warn("Desktop action execution error", { error: actionErr?.message });
+                }
+            }
             const turn = {
                 id: turnId,
                 input,
-                plan,
-                execution,
-                response,
+                response: brainResponse.text,
+                expression: brainResponse.expression,
+                actions: brainResponse.actions,
+                desktopAction: brainResponse.desktopAction,
                 timestamp,
+                success: brainResponse.success,
             };
             conversation.turns.push(turn);
             conversation.lastActivity = timestamp;
-            this.logger.info("User input processed successfully", {
+            this.logger.info("User input processed successfully by BOW Agent", {
                 turnId,
-                success: execution.success,
-                steps: execution.steps.length,
+                expression: turn.expression,
             });
             return turn;
         }
@@ -79,36 +75,37 @@ export class AIAgent {
             return {
                 id: turnId,
                 input,
-                response: `Error processing request: ${errorMsg}. Please try again with a different request.`,
+                response: `Xin lỗi, hệ thống gặp sự cố: ${errorMsg}. Vui lòng thử lại.`,
+                expression: "error",
                 timestamp,
+                success: false,
             };
         }
     }
-    parseIntent(input) {
-        // Simple intent parsing - just return the input as the intent for now
-        // TODO: Use NLP library like compromise.js or similar
-        return input.trim();
-    }
-    generateResponse(input, plan, execution) {
-        if (!execution.success) {
-            const failedSteps = execution.steps.filter((s) => !s.success);
-            return `I attempted to execute your request but encountered issues: ${failedSteps.map((s) => s.error).join("; ")}. The plan had ${execution.steps.length} steps, ${execution.steps.filter((s) => s.success).length} succeeded.`;
+    async executeDesktopAction(actionData, sessionId) {
+        const action = actionData.action || actionData.name;
+        const target = actionData.target || actionData.url || actionData.command || actionData.name;
+        const context = {
+            sessionId,
+            userId: sessionId,
+            timestamp: getCurrentTimestamp(),
+            requestId: generateSessionId(),
+        };
+        if (action === "open_app" || action === "open_application") {
+            await this.toolExecutor.execute("open_application", { name: target }, context);
         }
-        // Generate context-aware response
-        const successfulSteps = execution.steps.filter((s) => s.success).length;
-        if (input.toLowerCase().includes("open chrome") || input.toLowerCase().includes("open browser")) {
-            return "✓ Chrome browser opened successfully.";
+        else if (action === "open_chrome" || action === "open_browser") {
+            await this.toolExecutor.execute("open_chrome", { url: actionData.url }, context);
         }
-        if (input.toLowerCase().includes("search")) {
-            return "✓ Search request completed. Chrome should now display search results.";
+        else if (action === "browser_search") {
+            await this.toolExecutor.execute("browser_search", { query: actionData.query || target }, context);
         }
-        if (input.toLowerCase().includes("click")) {
-            return "✓ Click action completed.";
+        else if (action === "screenshot") {
+            await this.toolExecutor.execute("screenshot", {}, context);
         }
-        if (input.toLowerCase().includes("type")) {
-            return "✓ Text entered successfully.";
+        else if (action === "terminal_execute" || action === "terminal_cmd") {
+            await this.toolExecutor.execute("terminal_execute", { command: actionData.command || target }, context);
         }
-        return `✓ Task completed successfully. Executed ${successfulSteps} step(s) in ${execution.totalDuration}ms.`;
     }
     getConversation(sessionId) {
         return this.conversations.get(sessionId);
@@ -129,8 +126,9 @@ export class AIAgent {
     getStats() {
         const conversations = Array.from(this.conversations.values());
         const totalTurns = conversations.reduce((sum, c) => sum + c.turns.length, 0);
-        const successfulTurns = conversations.reduce((sum, c) => sum + c.turns.filter((t) => t.execution?.success).length, 0);
+        const successfulTurns = conversations.reduce((sum, c) => sum + c.turns.filter((t) => t.success !== false).length, 0);
         return {
+            brainGatewayConnected: this.brainClient.isGatewayConnected(),
             conversationCount: conversations.length,
             totalTurns,
             successfulTurns,
@@ -145,12 +143,16 @@ export class AIAgent {
     }
     getPlannerStats() {
         return {
-            totalPlans: this.planner.getPlans().length,
+            mode: "decoupled_bow_agent_v3.3",
+            brainGatewayConnected: this.brainClient.isGatewayConnected(),
             timestamp: getCurrentTimestamp(),
         };
     }
     getExecutorStats() {
-        return this.executor.getStats();
+        return {
+            totalExecuted: 0,
+            timestamp: getCurrentTimestamp(),
+        };
     }
 }
 export default AIAgent;

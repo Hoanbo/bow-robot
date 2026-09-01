@@ -270,18 +270,73 @@ export interface SafetyContext {
 // ROBOT GATEWAY TYPES
 // ============================================================================
 
+export type RobotExpression =
+    | "neutral"
+    | "blink"
+    | "happy"
+    | "thinking"
+    | "surprised"
+    | "sleeping"
+    | "listening"
+    | "speaking"
+    | "error";
+
+export interface ServoPosition {
+    pan: number;  // Horizontal angle: -90 to +90 degrees (or 0 to 180)
+    tilt: number; // Vertical angle: -45 to +45 degrees (or 45 to 135)
+}
+
 export interface RobotState {
     mode: "idle" | "listening" | "thinking" | "executing" | "speaking" | "error";
-    expression?: string;
+    expression?: RobotExpression | string;
     battery?: number;
+    headPosition?: ServoPosition;
     connected: boolean;
+    lastAudioLevel?: number;
 }
 
 export interface RobotCommand {
     id: string;
-    type: "move_head" | "move_arm" | "speak" | "listen" | "set_expression";
+    type: "move_head" | "move_arm" | "speak" | "listen" | "set_expression" | "desktop_action" | "stop";
     parameters: Record<string, unknown>;
     timestamp: string;
+}
+
+export interface DesktopActionPayload {
+    action:
+        | "open_app"
+        | "open_chrome"
+        | "open_url"
+        | "browser_search"
+        | "mouse_click"
+        | "mouse_move"
+        | "mouse_scroll"
+        | "keyboard_type"
+        | "keyboard_press"
+        | "keyboard_hotkey"
+        | "screenshot"
+        | "get_screen_info"
+        | "get_windows"
+        | "focus_window"
+        | "close_app"
+        | "file_read"
+        | "file_write"
+        | "file_list"
+        | "terminal_execute"
+        | "system_shutdown"
+        | "system_restart";
+    target?: string;
+    query?: string;
+    url?: string;
+    text?: string;
+    key?: string;
+    x?: number;
+    y?: number;
+    command?: string;
+    path?: string;
+    content?: string;
+    modifiers?: string[];
+    [key: string]: unknown;
 }
 
 // ============================================================================

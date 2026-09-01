@@ -1,62 +1,75 @@
 import { AudioMimeType, Logger, SpeechOptions, SpeechProvider } from "@bow/shared";
+import { EdgeTTSSpeechProvider } from "./speech/edgeTts.js";
+import { WhisperSTTProvider } from "./speech/whisperStt.js";
 
-interface OpenAISpeechConfig {
-    sttApiKey: string;
-    ttsApiKey: string;
-    sttModel: string;
-    ttsModel: string;
-    ttsVoice: string;
-    baseUrl?: string;
+export { EdgeTTSSpeechProvider } from "./speech/edgeTts.js";
+export { WhisperSTTProvider } from "./speech/whisperStt.js";
+
+export interface UnifiedSpeechConfig {
+    sttProvider?: "whisper" | "faster-whisper" | "openai" | string;
+    ttsProvider?: "edge-tts" | "openai" | string;
+    sttApiKey?: string;
+    ttsApiKey?: string;
+    sttBaseUrl?: string;
+    sttModel?: string;
+    ttsModel?: string;
+    ttsVoice?: string;
 }
 
-/** OpenAI REST adapter. The rest of BOW only depends on SpeechProvider. */
-export class OpenAISpeechProvider implements SpeechProvider {
+export class UnifiedSpeechProvider implements SpeechProvider {
     private readonly logger: Logger;
-    private readonly config: Required<OpenAISpeechConfig>;
+    private readonly edgeTts: EdgeTTSSpeechProvider;
+    private readonly whisperStt: WhisperSTTProvider;
+    private readonly config: UnifiedSpeechConfig;
 
-    constructor(logger: Logger, config: OpenAISpeechConfig) {
+    constructor(logger: Logger, config: UnifiedSpeechConfig = {}) {
         this.logger = logger;
         this.config = {
-            baseUrl: "https://api.openai.com/v1",
+            ttsProvider: config.ttsProvider || "edge-tts",
+            sttProvider: config.sttProvider || "whisper",
+            ttsVoice: config.ttsVoice || "vi-VN-HoaiMyNeural",
+            sttModel: config.sttModel || "whisper-1",
             ...config,
         };
+        this.edgeTts = new EdgeTTSSpeechProvider(logger, { defaultVoice: this.config.ttsVoice });
+        this.whisperStt = new WhisperSTTProvider(logger, {
+            apiKey: this.config.sttApiKey,
+            baseUrl: this.config.sttBaseUrl,
+            model: this.config.sttModel,
+        });
     }
 
-    async transcribe(audio: Buffer, fileName: string, mimeType: AudioMimeType, language?: string): Promise<string> {
-        if (!this.config.sttApiKey) throw new Error("STT_API_KEY is not configured");
-
-        const form = new FormData();
-        form.append("file", new Blob([audio], { type: mimeType }), fileName);
-        form.append("model", this.config.sttModel);
-        if (language) form.append("language", language);
-
-        const response = await fetch(`${this.config.baseUrl}/audio/transcriptions`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${this.config.sttApiKey}` },
-            body: form,
-        });
-        if (!response.ok) throw new Error(`STT request failed (${response.status}): ${await response.text()}`);
-        const data = (await response.json()) as { text?: string };
-        this.logger.debug("Audio transcribed", { characters: data.text?.length || 0, model: this.config.sttModel });
-        return data.text || "";
+    async transcribe(audio: Buffer, fileName = "speech.wav", mimeType: AudioMimeType = "audio/wav", language = "vi"): Promise<string> {
+        return this.whisperStt.transcribe(audio, fileName, mimeType, language);
     }
 
     async synthesize(text: string, options: SpeechOptions = {}): Promise<{ audio: Buffer; mimeType: AudioMimeType }> {
-        if (!this.config.ttsApiKey) throw new Error("TTS_API_KEY is not configured");
-        if (!text.trim()) throw new Error("Cannot synthesize empty text");
+        if (this.config.ttsProvider === "openai" && this.config.ttsApiKey) {
+            // OpenAI TTS fallback
+            const response = await fetch("https://api.openai.com/v1/audio/speech", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${this.config.ttsApiKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: this.config.ttsModel || "tts-1",
+                    input: text.slice(0, 4096),
+                    voice: options.voice || this.config.ttsVoice || "alloy",
+                    speed: options.speed || 1,
+                    response_format: "mp3",
+                }),
+            });
+            if (!response.ok) throw new Error(`OpenAI TTS request failed: ${await response.text()}`);
+            return { audio: Buffer.from(await response.arrayBuffer()), mimeType: "audio/mpeg" };
+        }
 
-        const response = await fetch(`${this.config.baseUrl}/audio/speech`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${this.config.ttsApiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                model: this.config.ttsModel,
-                input: text.slice(0, 4096),
-                voice: options.voice || this.config.ttsVoice,
-                speed: options.speed || 1,
-                response_format: "wav",
-            }),
+        // Default to Microsoft Edge Neural Vietnamese TTS (zero-cost, ultra-natural)
+        return this.edgeTts.synthesize(text, {
+            voice: options.voice || this.config.ttsVoice || "vi-VN-HoaiMyNeural",
+            speed: options.speed,
         });
-        if (!response.ok) throw new Error(`TTS request failed (${response.status}): ${await response.text()}`);
-        return { audio: Buffer.from(await response.arrayBuffer()), mimeType: "audio/wav" };
     }
 }
+
+/** Backward compatibility alias */
+export class OpenAISpeechProvider extends UnifiedSpeechProvider {}
+
+export default UnifiedSpeechProvider;
