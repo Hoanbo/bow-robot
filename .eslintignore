@@ -1,0 +1,9 @@
+dist
+node_modules
+build
+coverage
+*.json
+*.mjs
+*.js
+*.d.ts
+tsconfig.json
