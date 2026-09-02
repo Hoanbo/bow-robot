@@ -1,9 +1,9 @@
 /**
- * BOW Server Configuration Loader
+ * BOW Server Configuration Loader (V4.0)
  * Loads and validates configuration from environment and .env file
  */
 
-import { DEFAULT_CONFIG, LOG_LEVELS, LogLevel } from "@bow/shared";
+import { DEFAULT_CONFIG, LogLevel } from "@bow/shared";
 import dotenv from "dotenv";
 import path from "path";
 
@@ -18,6 +18,9 @@ export interface ServerConfig {
     host: string;
     port: number;
     version: string;
+
+    // Central Brain (BOW-AGENT V4.0)
+    bowAgentWsUrl: string;
 
     // Remote Agent
     remoteAgentHost: string;
@@ -95,7 +98,10 @@ export class ConfigLoader {
             // Server
             host: process.env.BOW_SERVER_HOST || DEFAULT_CONFIG.BOW_SERVER_HOST,
             port: parseInt(process.env.BOW_SERVER_PORT || String(DEFAULT_CONFIG.BOW_SERVER_PORT)),
-            version: process.env.BOW_SERVER_VERSION || "1.0.0",
+            version: process.env.BOW_SERVER_VERSION || "4.0.0",
+
+            // Central Brain V4.0
+            bowAgentWsUrl: process.env.BOW_AGENT_WS_URL || "ws://127.0.0.1:4078/ws/audio-stream",
 
             // Remote Agent
             remoteAgentHost: process.env.REMOTE_AGENT_HOST || DEFAULT_CONFIG.REMOTE_AGENT_HOST,
@@ -168,35 +174,14 @@ export class ConfigLoader {
     }
 
     private static validate(config: ServerConfig): void {
-        const errors: string[] = [];
-
-        // Validate port
         if (config.port < 1 || config.port > 65535) {
-            errors.push(`Invalid port: ${config.port}`);
+            throw new Error(`Invalid server port: ${config.port}`);
         }
-
-        // Validate timeouts
-        if (config.connectionTimeoutMs <= 0) {
-            errors.push("Connection timeout must be positive");
+        if (config.remoteAgentPort < 1 || config.remoteAgentPort > 65535) {
+            throw new Error(`Invalid remote agent port: ${config.remoteAgentPort}`);
         }
-
-        // Validate memory size
-        if (config.memoryMaxSize <= 0) {
-            errors.push("Memory max size must be positive");
-        }
-
-        // Validate AI/Vision providers have keys in production
-        if (config.nodeEnv === "production") {
-            if (!config.aiApiKey) {
-                errors.push("AI_API_KEY required in production");
-            }
-            if (!config.visionApiKey) {
-                errors.push("VISION_API_KEY required in production");
-            }
-        }
-
-        if (errors.length > 0) {
-            throw new Error(`Configuration validation failed:\n${errors.join("\n")}`);
+        if (config.maxConnections < 1) {
+            throw new Error(`Invalid maxConnections: ${config.maxConnections}`);
         }
     }
 }

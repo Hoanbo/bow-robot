@@ -61,6 +61,42 @@ class VirtualRobotApp {
             });
         });
 
+        // Sound Tracking AoA Slider
+        const aoaSlider = document.getElementById("aoa-slider");
+        const aoaVal = document.getElementById("aoa-val");
+        if (aoaSlider) {
+            aoaSlider.addEventListener("input", (e) => {
+                const val = parseInt(e.target.value, 10);
+                if (aoaVal) aoaVal.textContent = `${val}°`;
+                this.log(`🎯 Sound Tracking AoA directed to ${val}°`, "action");
+                this.sendRobotCommand("robot.sound_direction", { angleAoA: val });
+            });
+        }
+
+        // Proactive Event: Morning Briefing
+        const morningBtn = document.getElementById("morning-btn");
+        if (morningBtn) {
+            morningBtn.addEventListener("click", () => {
+                this.log("🌅 Kích hoạt Bản tin sáng 8:00 AM...", "action");
+                this.sendRobotCommand("robot.proactive_event", {
+                    event: "morning_briefing",
+                    speechText: "Kính chào Ngài! Tôi là BOWCON đây ạ. Chúc Ngài một ngày làm việc sáng suốt và đắc thắng! Tôi đã bật đèn bàn làm việc cho Ngài.",
+                });
+            });
+        }
+
+        // Proactive Event: Sedentary Health Alert
+        const healthBtn = document.getElementById("health-btn");
+        if (healthBtn) {
+            healthBtn.addEventListener("click", () => {
+                this.log("💧 Kích hoạt Cảnh báo sức khỏe ngồi > 45 phút...", "action");
+                this.sendRobotCommand("robot.proactive_event", {
+                    event: "sedentary_reminder",
+                    speechText: "Thưa Ngài, Ngài đã ngồi lập trình liên tục hơn 45 phút. Kính mong Ngài đứng dậy vươn vai và dùng chút nước để bảo vệ sức khỏe.",
+                });
+            });
+        }
+
         // Barge-in Interrupt Button
         const interruptBtn = document.getElementById("interrupt-btn");
         if (interruptBtn) {
@@ -103,7 +139,7 @@ class VirtualRobotApp {
 
         this.ws.onopen = () => {
             document.getElementById("status-dot").classList.add("connected");
-            this.log("Connected to BOW Robot V4.0 Gateway", "action");
+            this.log("Connected to BOWCON Robot V4.0 Gateway", "action");
         };
 
         this.ws.onmessage = (event) => {
@@ -216,12 +252,13 @@ class VirtualRobotApp {
                 document.getElementById("pan-val").textContent = `${this.panTilt.pan}°`;
                 document.getElementById("tilt-val").textContent = `${this.panTilt.tilt}°`;
             }
-        } else if (msg.type === "robot.telemetry") {
+        } else if (msg.type === "robot.telemetry" || msg.type === "robot.sensors_telemetry") {
             const battEl = document.getElementById("battery-stat");
             const rssiEl = document.getElementById("rssi-stat");
             const uptimeEl = document.getElementById("uptime-stat");
-            if (battEl && msg.battery !== undefined) {
-                battEl.textContent = `🔋 PIN: ${msg.battery}% ${msg.voltage ? `(${msg.voltage.toFixed(2)}V)` : ""}`;
+            const batteryVal = msg.batteryPercent !== undefined ? msg.batteryPercent : msg.battery;
+            if (battEl && batteryVal !== undefined) {
+                battEl.textContent = `🔋 PIN: ${batteryVal}% ${msg.voltage ? `(${msg.voltage.toFixed(2)}V)` : ""}`;
             }
             if (rssiEl && msg.wifiRssi !== undefined) {
                 rssiEl.textContent = `📶 RSSI: ${msg.wifiRssi} dBm`;
@@ -229,7 +266,22 @@ class VirtualRobotApp {
             if (uptimeEl && msg.uptime !== undefined) {
                 uptimeEl.textContent = `⏱️ UPTIME: ${msg.uptime}s`;
             }
-        } else if (msg.type === "robot.interrupt") {
+            if (msg.type === "robot.sensors_telemetry") {
+                this.log(`📡 Telemetry V4.0: Pin ${batteryVal}%, Temp: ${msg.temperatureCelsius || 35.4}°C, Charging: ${msg.isCharging ? "Có" : "Không"}`, "info");
+            }
+        } else if (msg.type === "robot.sound_direction") {
+            this.log(`🎯 Sound Direction AoA: ${msg.angleAoA}°`, "action");
+            const aoaSlider = document.getElementById("aoa-slider");
+            const aoaVal = document.getElementById("aoa-val");
+            if (aoaSlider) aoaSlider.value = msg.angleAoA;
+            if (aoaVal) aoaVal.textContent = `${msg.angleAoA}°`;
+        } else if (msg.type === "robot.proactive_event") {
+            this.log(`🌟 Proactive Event [${msg.event}]: "${msg.speechText}"`, "action");
+            if (msg.emotion) this.setExpression(msg.emotion);
+            if (msg.deskLight) {
+                this.log(`💡 Đèn bàn thông minh: ${msg.deskLight.toUpperCase()}`, "action");
+            }
+        } else if (msg.type === "robot.interrupt" || msg.action === "stop_playback") {
             this.log("⚡ [BARGE-IN] Received interrupt! Head tilted, listening mode active", "warn");
             this.setExpression("listening");
             this.setMode("listening");
@@ -517,6 +569,33 @@ class VirtualRobotApp {
             ctx.shadowColor = "#ffa502";
             ctx.roundRect(cx - eyeW / 2, cy - 6 * sy, eyeW, 16 * sy, 4 * sx);
             ctx.fill();
+            return;
+        }
+
+        // 10. EXP_SLEEPING: Closed peaceful curved eyelid with breathing oscillation
+        if (exp === "sleeping") {
+            const breath = Math.sin(Date.now() / 800) * 2 * sy;
+            ctx.strokeStyle = "#38ef7d";
+            ctx.shadowColor = "#38ef7d";
+            ctx.lineWidth = 5 * sy;
+            ctx.beginPath();
+            ctx.arc(cx, cy + 8 * sy + breath, eyeW / 2, 0, Math.PI, false);
+            ctx.stroke();
+            return;
+        }
+
+        // 11. EXP_SURPRISED: Big wide open circular eyes
+        if (exp === "surprised") {
+            eyeW = 36 * sx;
+            eyeH = 44 * sy;
+            ctx.roundRect(cx - eyeW / 2, cy - eyeH / 2, eyeW, eyeH, 16 * sx);
+            ctx.fill();
+            // Wide open pupil
+            ctx.fillStyle = "#030a06";
+            ctx.beginPath();
+            ctx.arc(cx, cy, 7 * sx, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#38ef7d";
             return;
         }
 

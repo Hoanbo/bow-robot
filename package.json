@@ -1,7 +1,7 @@
 {
-    "name": "bow-robot-v1",
-    "version": "1.0.0",
-    "description": "BOW ROBOT V1.0 — Software-First AI Computer Assistant",
+    "name": "bow-robot",
+    "version": "4.0.0",
+    "description": "BOW ROBOT V4.0 — The Fully Autonomous Embodied Companion (Connected to @bow/agent v4.0.0)",
     "private": true,
     "type": "module",
     "engines": {
@@ -17,8 +17,8 @@
     "scripts": {
         "prepare": "husky install || echo skip",
         "dev": "npm run dev --workspaces",
-        "build": "npm run build --workspaces",
-        "test": "npm run build --workspace=@bow/tests && npm test --workspace=@bow/tests",
+        "build": "npm run build --workspace=@bow/shared && npm run build --workspace=@bow/server && npm run build --workspace=@bow/remote-agent && npm run build --workspace=@bow/simulator && npm run build --workspace=@bow/tests",
+        "test": "npm run build && npm test --workspace=@bow/tests",
         "clean": "npm run clean --workspaces && rm -rf node_modules",
         "lint": "eslint . --ext .ts",
         "format": "prettier --write \"**/*.ts\"",
@@ -29,6 +29,9 @@
         "network:diagnose": "node scripts/network-diagnose.mjs",
         "e2e:lan": "node scripts/run-lan-e2e.mjs",
         "e2e:windows": "node scripts/run-windows-e2e.mjs"
+    },
+    "dependencies": {
+        "@bow/agent": "^4.0.0"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^6.7.2",

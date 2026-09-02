@@ -45,8 +45,16 @@ export class AnimatedEyesEngine {
         this.currentExpression = exp;
     }
 
+    public getExpression(): RobotExpression {
+        return this.currentExpression;
+    }
+
     public setPanTilt(pos: ServoPosition): void {
         this.panTilt = pos;
+    }
+
+    public getPanTilt(): ServoPosition {
+        return { ...this.panTilt };
     }
 
     /**

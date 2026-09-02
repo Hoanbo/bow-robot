@@ -298,8 +298,8 @@ export class BOWServer {
             // new client requests.
             if ((request as any).type === RESPONSE_TYPES.TOOL_RESULT) return;
 
-            // Validate protocol version
-            if (request.version !== PROTOCOL_VERSION) {
+            // Validate protocol version (allow backward compatibility with 1.0.0 and 4.0.0)
+            if (request.version && request.version !== PROTOCOL_VERSION && request.version !== "1.0.0" && request.version !== "4.0.0") {
                 this.sendResponse(clientId, {
                     version: PROTOCOL_VERSION,
                     requestId: request.requestId,
@@ -323,6 +323,55 @@ export class BOWServer {
 
                 case REQUEST_TYPES.HEARTBEAT:
                     this.handleHeartbeat(clientId, request);
+                    break;
+
+                case REQUEST_TYPES.ROBOT_INTERRUPT:
+                    void this.robotGateway.interrupt("barge_in");
+                    this.sendResponse(clientId, {
+                        version: PROTOCOL_VERSION,
+                        requestId: request.requestId,
+                        type: RESPONSE_TYPES.ROBOT_INTERRUPT,
+                        success: true,
+                        result: { action: "stop_playback", reason: "barge_in" },
+                        timestamp: getCurrentTimestamp(),
+                    });
+                    break;
+
+                case REQUEST_TYPES.ROBOT_SOUND_DIRECTION: {
+                    const angle = Number((request as any).angleAoA ?? 0);
+                    void this.robotGateway.trackSoundDirection(angle);
+                    this.sendResponse(clientId, {
+                        version: PROTOCOL_VERSION,
+                        requestId: request.requestId,
+                        type: RESPONSE_TYPES.ROBOT_RESPONSE,
+                        success: true,
+                        result: { trackedAngle: angle },
+                        timestamp: getCurrentTimestamp(),
+                    });
+                    break;
+                }
+
+                case REQUEST_TYPES.ROBOT_SENSORS_TELEMETRY:
+                    this.logger.debug("Received robot sensors telemetry", (request as any).arguments || request);
+                    this.sendResponse(clientId, {
+                        version: PROTOCOL_VERSION,
+                        requestId: request.requestId,
+                        type: RESPONSE_TYPES.ROBOT_RESPONSE,
+                        success: true,
+                        timestamp: getCurrentTimestamp(),
+                    });
+                    break;
+
+                case REQUEST_TYPES.ROBOT_AUDIO_STREAM:
+                case REQUEST_TYPES.ROBOT_AUDIO_IN:
+                    this.logger.debug("Received audio stream chunk", { length: (request as any).audio?.length });
+                    this.sendResponse(clientId, {
+                        version: PROTOCOL_VERSION,
+                        requestId: request.requestId,
+                        type: RESPONSE_TYPES.ROBOT_RESPONSE,
+                        success: true,
+                        timestamp: getCurrentTimestamp(),
+                    });
                     break;
 
                 case REQUEST_TYPES.TOOL_EXECUTE:
@@ -377,7 +426,6 @@ export class BOWServer {
         const expected = Buffer.from(this.config.remoteAgentToken);
         const actual = Buffer.from(request.token || "");
         const isValid = expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
-
         if (isValid) {
             connection.authenticated = true;
             connection.session.metadata = { authenticatedAt: getCurrentTimestamp() };
@@ -672,6 +720,18 @@ export class BOWServer {
 
     getSessionCount(): number {
         return this.sessions.size;
+    }
+
+    getRobotGateway(): RobotGateway {
+        return this.robotGateway;
+    }
+
+    getAgent(): AIAgent {
+        return this.agent;
+    }
+
+    getRegistry(): ToolRegistry {
+        return this.registry;
     }
 }
 

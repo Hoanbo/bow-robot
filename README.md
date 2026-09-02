@@ -1,350 +1,109 @@
-# BOW ROBOT V1.0 — Software-First AI Computer Assistant
+# BOWCON V4.0 — The Fully Autonomous Embodied Companion
+### (Kết Nối & Đồng Bộ Hoàn Hảo Với @bow/agent v4.0.0)
 
-A comprehensive AI computer assistant system with natural language understanding, screen reading, computer control, and robot integration capabilities.
-
-## 🎯 Core Objectives
-
-- **Conversation**: User talks to BOW in natural language
-- **Understanding**: BOW comprehends the request
-- **Computer Control**: BOW can control mouse, keyboard, applications, and browser
-- **Vision**: BOW reads and understands screen content
-- **Safety**: All actions respect permission levels and safety policies
-- **Robot-Ready**: Architecture supports future ESP32-S3 robot integration
-
-## 🏗️ Architecture Overview
-
-BOW V1 uses a **two-PC architecture**:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        User                                 │
-└────────────────────┬────────────────────────────────────────┘
-                     │ (Natural Language)
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│              BOW SERVER (Xeon PC)                           │
-│  🧠 Brain: Agent, Planner, Executor, Memory, Safety       │
-└────────────────────┬────────────────────────────────────────┘
-                     │ (WebSocket)
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│           REMOTE AGENT (User's PC)                          │
-│  🖱️ Hands: Mouse, Keyboard, Screen, Applications, Browser │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Two-PC Mode (Production)
-
-- **Xeon PC**: Runs BOW Server (brain)
-- **User's PC**: Runs Remote Agent (hands)
-- Communication: Secure WebSocket
-
-### Single-PC Mode (Development)
-
-Both run on the same machine during development and testing.
-
-## 📁 Project Structure
-
-```
-BOW-ROBOT/
-│
-├── bow-server/           # 🧠 AI Brain
-│   ├── src/
-│   │   ├── agent/        # AI Agent, Planner, Executor
-│   │   ├── tools/        # Tool Registry
-│   │   ├── memory/       # Memory Management
-│   │   ├── safety/       # Safety & Permissions
-│   │   ├── vision/       # Screenshot & Vision Processing
-│   │   ├── speech/       # STT/TTS Abstractions
-│   │   ├── remote/       # Remote Agent Communication
-│   │   ├── robot/        # Robot Gateway
-│   │   ├── api/          # REST/WebSocket API
-│   │   └── index.ts
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── bow-remote-agent/     # 🖱️ Computer Hands
-│   ├── src/
-│   │   ├── computer/     # Mouse, Keyboard, Screen
-│   │   ├── applications/ # App Launcher
-│   │   ├── browser/      # Browser Control
-│   │   ├── terminal/     # Terminal Executor
-│   │   ├── security/     # Permissions
-│   │   ├── connection/   # WebSocket Client
-│   │   └── index.ts
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── shared/               # 📦 Shared Code
-│   ├── src/
-│   │   ├── types/        # TypeScript Interfaces
-│   │   ├── protocol/     # WebSocket Protocol
-│   │   ├── constants/    # Shared Constants
-│   │   ├── utils/        # Utility Functions
-│   │   ├── logger/       # Logging System
-│   │   └── index.ts
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── simulator/            # 🤖 Robot Simulator
-│   ├── src/
-│   │   ├── ui/           # UI Components
-│   │   ├── simulator/    # Robot State
-│   │   └── index.ts
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── tests/                # ✅ Test Suite
-│   ├── unit/
-│   ├── integration/
-│   ├── e2e/
-│   └── package.json
-│
-├── docs/                 # 📚 Documentation
-│   ├── architecture.md
-│   ├── protocol.md
-│   ├── safety.md
-│   ├── api.md
-│   └── development.md
-│
-├── scripts/              # 🔧 Build Scripts
-│   ├── setup.ts
-│   └── dev.ts
-│
-├── package.json          # Root Package
-├── tsconfig.json         # Root TypeScript Config
-├── .env.example          # Configuration Template
-├── .gitignore
-├── README.md
-└── LICENSE
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js >= 18.0.0
-- npm >= 9.0.0
-- Windows 10/11 (for Remote Agent)
-
-### Installation
-
-1. **Clone the repository**
-
-```bash
-git clone https://github.com/yourusername/bow-robot-v1.git
-cd bow-robot-v1
-```
-
-2. **Install dependencies**
-
-```bash
-npm install
-```
-
-3. **Setup environment**
-
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-4. **Run in development mode**
-
-```bash
-# Terminal 1: BOW Server
-npm run server
-
-# Terminal 2: Remote Agent
-npm run agent
-
-# Terminal 3: Robot Simulator
-npm run simulator
-```
-
-## 📋 Development Phases
-
-### ✅ PHASE 1: Foundation
-- Repository structure
-- TypeScript setup
-- Shared types
-- Configuration & logging
-
-### PHASE 2: BOW Server
-- Health API
-- WebSocket server
-- Authentication
-
-### PHASE 3: Remote Agent
-- Mouse control
-- Keyboard input
-- Screen capture
-- Application launcher
-
-### PHASE 4: Tool Registry & AI Agent
-- Tool registry
-- AI agent
-- Planner
-- Executor
-
-### PHASE 5: Advanced Tools
-- Browser control (Playwright)
-- Filesystem operations
-- Terminal execution
-
-### PHASE 6: Vision
-- Screenshot capture
-- OCR integration
-- Vision analysis
-
-### PHASE 7: Speech
-- Speech-to-text
-- Text-to-speech
-- Conversation loop
-
-### PHASE 8: Memory & Safety
-- Memory system
-- Safety policies
-- User confirmation
-
-### PHASE 9: Robot Simulator
-- UI simulation
-- Robot gateway
-- Simulator protocol
-
-### PHASE 10: BOW TEST
-- BOW TEST tool
-- Test execution
-- Result parsing
-
-### PHASE 11-12: Testing & Local Mode
-- Unit tests
-- Integration tests
-- E2E tests
-- Local validation
-
-### PHASE 13: Two-PC Mode
-- Xeon deployment
-- Remote PC connection
-- Two-PC validation
-
-### Current implementation status
-
-Phases 1–5 are implemented in the repository. The remaining production-ready
-building blocks are also present: screenshot/vision abstraction, headset
-speech endpoints and voice loop, JSON memory with secret-key protection,
-safety enforcement, simulator/gateway, BOW TEST adapter, and local validation.
-Some provider-specific features (OCR/cloud vision, Playwright browser actions,
-and hardware ESP32 transport) remain explicitly disabled until configured.
-
-For local validation, run the three processes in separate terminals and then:
-
-```bash
-npm run validate:local
-```
-
-For two-PC mode, set `BOW_SERVER_HOST`/`BOW_SERVER_PORT` on the server and
-`BOW_SERVER_HOST` plus the shared `REMOTE_AGENT_TOKEN` on the remote agent.
-Keep the server port restricted to the LAN firewall and never expose the
-Remote Agent endpoint directly to the Internet.
-
-## 🛠️ Available Commands
-
-```bash
-# Development
-npm run dev              # Run all workspaces in dev mode
-npm run server           # Run BOW Server
-npm run agent            # Run Remote Agent
-npm run simulator        # Run Robot Simulator
-
-# Building
-npm run build            # Build all workspaces
-
-# Testing
-npm run test             # Run all tests
-
-# Code Quality
-npm run lint             # Run ESLint
-npm run format           # Format code with Prettier
-
-# Cleanup
-npm run clean            # Remove all build artifacts
-```
-
-## 📚 Documentation
-
-- [Architecture Guide](docs/architecture.md)
-- [WebSocket Protocol](docs/protocol.md)
-- [Safety System](docs/safety.md)
-- [API Reference](docs/api.md)
-- [Development Guide](docs/development.md)
-
-## 🔒 Safety & Permissions
-
-BOW implements a multi-level safety system:
-
-- **SAFE**: No confirmation needed (screenshots, reading files)
-- **CONFIRM**: Requires user confirmation (file deletion, shutdown)
-- **BLOCKED**: Completely disabled for V1
-
-## 🧠 AI Features
-
-- Natural language understanding
-- Multi-step reasoning
-- Tool selection & execution
-- Error recovery
-- Context awareness
-- Memory integration
-
-## 🎮 Computer Control Features
-
-- Mouse control (move, click, double-click)
-- Keyboard input (type, key press)
-- Screenshot capture
-- Screen text recognition (OCR)
-- Application launching
-- Browser automation
-
-## 📊 Observability
-
-All requests include:
-- Request ID & session ID
-- Timestamp
-- Agent decision
-- Tool execution
-- Latency metrics
-- Error tracking
-
-## 🚫 V1 Limitations
-
-The following are NOT included in V1:
-
-- Robot walking
-- Autonomous navigation
-- SLAM
-- Facial recognition
-- Third-party API integrations (Facebook, Zalo, Instagram)
-- Complex distributed systems
-- Local LLM requirement
-
-## 🔮 Future (V2+)
-
-- ESP32-S3 hardware integration
-- INMP441 microphone
-- MAX98357A speaker
-- OLED display
-- Servo motors
-- Advanced robotics
-
-## 📄 License
-
-MIT
-
-## 👥 Contributing
-
-See [DEVELOPMENT.md](docs/development.md)
+Hệ thống thể xác tự hành, giọng nói thời gian thực và phản xạ thông minh **BOWCON** — Người bạn đồng hành AI thể xác (Embodied AI Companion) phụng sự người dùng theo chuẩn cấp độ 4.0 quốc tế.
 
 ---
 
-**Status**: PHASE 1 Complete ✅  
-**Last Updated**: 2026-09-01
+## 👑 1. Danh Tính & Persona Chuẩn Mực
+
+* **Tên chính thức**: **BOWCON** (viết liền không dấu cách).
+* **Quy tắc xưng hô**:
+  * Luôn xưng là **"Tôi"** và gọi người dùng là **"Ngài"**.
+  * Tuyệt đối KHÔNG xưng là "mình", "em", "con".
+  * Tuyệt đối KHÔNG gọi Ngài là "quý khách", "bạn" hay "sếp".
+  * Phong thái: Tôn nghiêm, trung thành tuyệt đối, sắc bén, lịch thiệp và đắc lực phụng sự Ngài.
+* **Handshake WebSocket**:
+  * `channel`: `'ROBOT'`
+  * `role`: `'owner'`
+  * `client`: `'BOWCON'`
+  * `version`: `'4.0.0'`
+
+---
+
+## 🛠️ 2. Cấu Hình Phần Cứng Kit Thực Tế (ESP32-S3 Robot Kit)
+
+Bộ kit phần cứng thực tế bao gồm:
+1. **Bo mạch vi điều khiển**: **ESP32-S3 N16R8** (16MB Flash, 8MB PSRAM).
+2. **Microphone kỹ thuật số**: **INMP441** (I2S Input: WS, SCK, SD) $\to$ stream âm thanh PCM 16kHz 16-bit Mono.
+3. **Mạch khuếch đại & Loa**: **MAX98357** (I2S Output: LRC, BCLK, DIN) + Loa khoang cộng hưởng 2415.
+4. **Màn hình mắt cảm xúc**: **OLED 0.96 inch** (Giao tiếp I2C, Driver SSD1306/SSD1315).
+5. **Cơ cấu truyền động**: Cặp động cơ giảm tốc kim loại **N20** + Mini Motor Driver điều khiển 2 bánh xe.
+
+---
+
+## 📡 3. Giao Thức WebSocket Âm Thanh Thời Gian Thực (`/ws/audio-stream`)
+
+Robot kết nối với não bộ trung tâm qua cổng: `ws://<server-ip>:4078/ws/audio-stream`.
+
+### A. Luồng Dữ Liệu Inbound (Robot $\to$ Brain):
+* **`robot.audio_stream` / `robot.audio_in`**: Stream PCM 16kHz 16-bit Mono thu từ mic INMP441 gửi lên Agent để nhận dạng giọng nói (STT).
+* **`robot.sound_direction`**: Góc nguồn âm thanh AoA (-90° đến +90°) và năng lượng micro trái/phải (`micLeftEnergy`, `micRightEnergy`).
+* **`robot.sensors_telemetry`**: Báo cáo tình trạng pin, sạc, nhiệt độ và cảm biến:
+  ```json
+  {
+    "type": "robot.sensors_telemetry",
+    "batteryPercent": 98,
+    "isCharging": false,
+    "obstaclesDetected": false,
+    "temperatureCelsius": 35.5,
+    "activeSensors": ["INMP441_MIC", "MAX98357A_DAC", "SSD1306_OLED", "PAN_TILT_SERVOS", "ADC_BATTERY"]
+  }
+  ```
+
+### B. Luồng Lệnh Outbound (Brain $\to$ Robot):
+* **`robot.response`**: Âm thanh TTS phát qua loa MAX98357, biểu cảm OLED và điều khiển động cơ N20 xoay hướng mặt về phía Ngài.
+* **`robot.interrupt` (Barge-In Reflex < 80ms)**:
+  * Khi Ngài cất tiếng nói trong lúc robot đang phát âm thanh $\to$ Agent gửi lệnh `action: 'stop_playback'`, `reason: 'barge_in'`.
+  * **Phản xạ của Robot trong < 80ms**:
+    - Lập tức ngắt loa MAX98357 (Mute I2S).
+    - Mắt OLED lập tức đổi sang `listening` (mắt mở to chú ý lắng nghe).
+    - Động cơ N20 dừng hoặc xoay thẳng hướng nhìn Ngài.
+* **`robot.proactive_event` (Sự kiện chủ động)**:
+  * **Bản tin sáng 8:00 AM**: Robot cất tiếng: *"Kính chào Ngài! Tôi là BOWCON đây ạ..."*, mắt OLED `happy`, phối hợp kích hoạt đèn bàn làm việc (`desk_light: 'on'`).
+  * **Nhắc nhở sức khỏe**: Khi Ngài ngồi code liên tục > 45 phút, robot cất giọng nhắc: *"Thưa Ngài, Ngài đã ngồi lập trình liên tục hơn 45 phút. Kính mong Ngài đứng dậy vươn vai và dùng chút nước để bảo vệ sức khỏe."*, mắt OLED `listening`.
+
+---
+
+## 🏗️ 4. Cấu Trúc Dự Án (Monorepo Workspaces)
+
+```
+c:\BOW\bow-robot\
+├── shared/               # 📦 Kiểu dữ liệu, hằng số, ROBOT_PERSONA, HARDWARE_KIT (V4.0.0)
+├── bow-server/           # 🧠 Máy chủ trung gian kết nối Brain 4078, Robot Gateway & Tools (V4.0.0)
+├── bow-remote-agent/     # 🖱️ Điều khiển chuột, bàn phím, màn hình Windows (V4.0.0)
+├── simulator/            # 🤖 Trình giả lập Robot Web Dashboard & OLED SSD1306 Canvas (Port 3002)
+├── embedded/esp32/       # ⚡ Firmware C++ ESP32-S3 N16R8 (I2S Mic/DAC, OLED, N20)
+└── tests/                # ✅ Bộ kiểm thử tích hợp chuẩn V4.0 (v4.0-ecosystem.test.ts)
+```
+
+---
+
+## 🚀 5. Khởi Chạy Hệ Thống
+
+### 1. Cài đặt và biên dịch:
+```bash
+npm install
+npm run build
+```
+
+### 2. Chạy bộ kiểm thử tích hợp:
+```bash
+npm test
+```
+
+### 3. Chạy Virtual Simulator Dashboard (Port 3002):
+```bash
+npm run simulator
+# Truy cập: http://localhost:3002
+```
+
+### 4. Chạy BOW Server kết nối Brain:
+```bash
+npm run server
+```
+
+---
+
+## 📄 Bản Quyền & Phát Triển
+Phát triển bởi đội ngũ Kỹ sư BOW Ecosystem. Đồng bộ và phụng sự tối ưu cho `@bow/agent v4.0.0`.

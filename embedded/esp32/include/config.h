@@ -21,9 +21,9 @@
 #define WIFI_PASSWORD           "YOUR_WIFI_PASSWORD"    // Mật khẩu Wi-Fi
 
 #define BOW_GATEWAY_HOST        "192.168.1.100"         // IP máy tính chạy bow-agent (xem bằng ipconfig)
-#define BOW_GATEWAY_PORT        4000                    // Cổng WebSocket kết nối trực tiếp với bow-agent
-#define BOW_GATEWAY_PATH        "/ws"                   // Endpoint WebSocket
-#define BOW_ROBOT_VERSION       "4.0"                   // Phiên bản firmware đồng bộ hệ sinh thái V4.0
+#define BOW_GATEWAY_PORT        4078                    // Cổng WebSocket kết nối trực tiếp với bow-agent V4.0
+#define BOW_GATEWAY_PATH        "/ws/audio-stream"      // Endpoint WebSocket Audio Stream V4.0
+#define BOW_ROBOT_VERSION       "4.0.0"                 // Phiên bản firmware đồng bộ hệ sinh thái V4.0
 
 // ----------------------------------------------------------------------------
 // 2. MÀN HÌNH OLED 0.96" SSD1306 (128x64 I2C)

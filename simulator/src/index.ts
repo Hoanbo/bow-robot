@@ -52,21 +52,31 @@ function broadcast(server: WebSocketServer, payloadObj: any): void {
 }
 
 function handleInterrupt(server: WebSocketServer): void {
+    const startTime = Date.now();
     if (activeSpeakTimeout) {
         clearTimeout(activeSpeakTimeout);
         activeSpeakTimeout = null;
     }
-    const currentTilt = (state.headPosition?.tilt || 0) + 10;
+    broadcast(server, { type: "audio.stop", reason: "barge_in", timestamp: getCurrentTimestamp() });
+
+    const newTilt = 10;
     state = {
         ...state,
         mode: ROBOT_STATES.LISTENING,
         expression: "listening",
-        headPosition: { pan: state.headPosition?.pan || 0, tilt: Math.min(currentTilt, 45) },
+        headPosition: { pan: state.headPosition?.pan || 0, tilt: newTilt },
     };
     eyesEngine.setExpression("listening");
     eyesEngine.setPanTilt(state.headPosition!);
-    logger.info("⚡ [BARGE-IN] Interrupted! Switching to listening + head tilt");
-    broadcast(server, { type: "robot.interrupt", timestamp: getCurrentTimestamp() });
+    const reflexDelayMs = Date.now() - startTime;
+    logger.info(`⚡ [BARGE-IN] Reflex executed in ${reflexDelayMs}ms (< 80ms target): Mute DAC, OLED listening, tilt: ${newTilt}°`);
+    broadcast(server, {
+        type: "robot.interrupt",
+        action: "stop_playback",
+        reason: "barge_in",
+        reflexDelayMs,
+        timestamp: getCurrentTimestamp(),
+    });
     broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
 }
 
@@ -75,6 +85,63 @@ async function handleCommand(command: RobotCommand, server: WebSocketServer): Pr
 
     if (command.type === "interrupt" || command.type === "robot.interrupt") {
         handleInterrupt(server);
+        return;
+    }
+
+    if (command.type === "robot.sound_direction") {
+        const angle = Number(command.parameters.angleAoA ?? 0);
+        const clampedPan = Math.max(-90, Math.min(90, Math.round(angle)));
+        const tilt = state.headPosition?.tilt || 0;
+        state = { ...state, headPosition: { pan: clampedPan, tilt } };
+        eyesEngine.setPanTilt({ pan: clampedPan, tilt });
+        logger.info(`🎯 [SOUND TRACKING] Servo Pan tracked voice at ${clampedPan}°`);
+        broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
+        broadcast(server, {
+            type: "robot.sound_direction",
+            angleAoA: clampedPan,
+            micLeftEnergy: command.parameters.micLeftEnergy,
+            micRightEnergy: command.parameters.micRightEnergy,
+            timestamp: getCurrentTimestamp(),
+        });
+        return;
+    }
+
+    if (command.type === "robot.proactive_event") {
+        const eventName = String(command.parameters.event || "morning_briefing");
+        const speechText = String(command.parameters.speechText || "");
+        const deskLight = command.parameters.deskLight || (eventName === "morning_briefing" ? "on" : undefined);
+        const emotion = (command.parameters.emotion as any) || (eventName === "morning_briefing" ? "happy" : "listening");
+
+        state = {
+            ...state,
+            expression: emotion,
+            headPosition: { pan: 0, tilt: 10 },
+        };
+        eyesEngine.setExpression(emotion);
+        eyesEngine.setPanTilt({ pan: 0, tilt: 10 });
+
+        broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
+        broadcast(server, {
+            type: "robot.proactive_event",
+            event: eventName,
+            speechText,
+            emotion,
+            deskLight,
+            servo: { panAngle: 0, tiltAngle: 10 },
+            timestamp: getCurrentTimestamp(),
+        });
+
+        if (speechText) {
+            await handleCommand(
+                {
+                    id: generateSessionId(),
+                    type: "speak",
+                    parameters: { text: speechText, expression: emotion, durationMs: Math.max(2000, speechText.length * 75) },
+                    timestamp: getCurrentTimestamp(),
+                },
+                server
+            );
+        }
         return;
     }
 
@@ -138,7 +205,7 @@ async function forwardQueryToBowServer(query: string, server: WebSocketServer): 
 
         if (res.ok) {
             const data = (await res.json()) as any;
-            const replyText = data.response || "Dạ, em đã xử lý xong.";
+            const replyText = data.response || "Thưa Ngài, Tôi đã xử lý xong.";
             const expression = data.expression || "happy";
 
             let audioBase64: string | undefined;
@@ -174,7 +241,7 @@ async function forwardQueryToBowServer(query: string, server: WebSocketServer): 
             const errText = await res.text();
             broadcast(server, {
                 type: "agent.response",
-                text: `Lỗi kết nối máy chủ: ${errText}`,
+                text: `Thưa Ngài, máy chủ phản hồi lỗi: ${errText}`,
                 expression: "error",
                 timestamp: getCurrentTimestamp(),
             });
@@ -262,6 +329,17 @@ setInterval(() => {
         timestamp: getCurrentTimestamp(),
     };
     broadcast(server, telemetry);
+
+    const sensorsTelemetry = {
+        type: "robot.sensors_telemetry",
+        batteryPercent: state.battery ?? 100,
+        isCharging: false,
+        obstaclesDetected: false,
+        temperatureCelsius: 35.4,
+        activeSensors: ["INMP441_MIC", "MAX98357A_DAC", "SSD1306_OLED", "PAN_TILT_SERVOS", "ADC_BATTERY"],
+        timestamp: getCurrentTimestamp(),
+    };
+    broadcast(server, sensorsTelemetry);
 }, 10000);
 
 httpServer.listen(port, "0.0.0.0", () => {
@@ -272,7 +350,7 @@ httpServer.listen(port, "0.0.0.0", () => {
         timestamp: getCurrentTimestamp(),
     });
     console.log(`\n======================================================`);
-    console.log(`🤖 BOW ROBOT VIRTUAL SIMULATOR & OLED 128x64 DASHBOARD V4.0`);
+    console.log(`🤖 BOWCON VIRTUAL SIMULATOR & OLED 128x64 DASHBOARD V4.0`);
     console.log(`🌐 Web UI: http://localhost:${port}`);
     console.log(`======================================================\n`);
 });

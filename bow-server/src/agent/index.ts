@@ -112,7 +112,7 @@ export class AIAgent {
             return {
                 id: turnId,
                 input,
-                response: `Xin lỗi, hệ thống gặp sự cố: ${errorMsg}. Vui lòng thử lại.`,
+                response: `Thưa Ngài, hệ thống gặp sự cố: ${errorMsg}. Tôi kính mong Ngài lượng thứ và thử lại.`,
                 expression: "error",
                 timestamp,
                 success: false,

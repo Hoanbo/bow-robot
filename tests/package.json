@@ -1,10 +1,10 @@
 {
     "name": "@bow/tests",
-    "version": "1.0.0",
+    "version": "4.0.0",
     "private": true,
     "type": "module",
     "scripts": {
-        "test": "node dist/v3.3-ecosystem.test.js",
+        "test": "node dist/v4.0-ecosystem.test.js",
         "build": "tsc",
         "clean": "rm -rf dist"
     },

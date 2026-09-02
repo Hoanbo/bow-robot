@@ -1,5 +1,5 @@
 /**
- * Shared Constants for BOW ROBOT V1
+ * Shared Constants for BOW ROBOT V4.0 (The Fully Autonomous Embodied Companion)
  */
 
 // Tool categories
@@ -46,7 +46,7 @@ export const CONFIRM_TOOLS = [
     "system_restart",
 ];
 
-// Blocked tools in V1
+// Blocked tools in V4
 export const BLOCKED_TOOLS = [
     "system_format_drive",
     "system_uninstall",
@@ -104,6 +104,27 @@ export const ROBOT_STATES = {
     ERROR: "error",
 } as const;
 
+// Robot identity & persona V4.0
+export const ROBOT_PERSONA = {
+    NAME: "BOWCON",
+    NICKNAMES: ["BOWCON"],
+    CALL_USER: "Ngài",
+    SELF_CALL: "Tôi",
+    FORBIDDEN_SELF: ["mình", "em", "con"],
+    FORBIDDEN_USER: ["quý khách", "bạn", "sếp"],
+    CHANNEL: "ROBOT",
+    ROLE: "owner",
+} as const;
+
+// ESP32-S3 Robot Kit Hardware Configuration
+export const HARDWARE_KIT = {
+    MCU: "ESP32-S3 N16R8 (16MB Flash, 8MB PSRAM)",
+    MIC: "INMP441 (I2S Input: WS, SCK, SD)",
+    SPEAKER: "MAX98357 (I2S Output: LRC, BCLK, DIN) + Loa khoang cộng hưởng 2415",
+    DISPLAY: "OLED 0.96 inch (I2C: SDA, SCL, Driver SSD1306/SSD1315)",
+    MOTORS: "Động cơ giảm tốc kim loại N20 + Mini Motor Driver (2 bánh xe)",
+} as const;
+
 // Message roles
 export const MESSAGE_ROLES = {
     USER: "user",
@@ -117,9 +138,17 @@ export const REQUEST_TYPES = {
     HEALTH_CHECK: "health.check",
     AUTH: "auth",
     HEARTBEAT: "heartbeat",
+    ROBOT_AUDIO_STREAM: "robot.audio_stream",
+    ROBOT_AUDIO_IN: "robot.audio_in",
+    ROBOT_SOUND_DIRECTION: "robot.sound_direction",
+    ROBOT_SENSORS_TELEMETRY: "robot.sensors_telemetry",
+    ROBOT_INTERRUPT: "robot.interrupt",
 } as const;
 
-export const PROTOCOL_VERSION = "1.0.0";
+export const PROTOCOL_VERSION = "4.0.0";
+
+// Central Brain V4.0 Default Endpoint
+export const DEFAULT_BOW_AGENT_WS_URL = "ws://127.0.0.1:4078/ws/audio-stream";
 
 // Response types
 export const RESPONSE_TYPES = {
@@ -128,6 +157,9 @@ export const RESPONSE_TYPES = {
     AUTH: "auth",
     ERROR: "error",
     HEARTBEAT: "heartbeat",
+    ROBOT_RESPONSE: "robot.response",
+    ROBOT_INTERRUPT: "robot.interrupt",
+    ROBOT_PROACTIVE_EVENT: "robot.proactive_event",
 } as const;
 
 // Default timeouts (ms)

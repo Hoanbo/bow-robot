@@ -15,6 +15,7 @@ export { ToolRegistry } from "./tools/registry.js";
 export { ToolExecutor } from "./tools/executor.js";
 export { EdgeTTSSpeechProvider, WhisperSTTProvider, UnifiedSpeechProvider } from "./speech.js";
 export { RobotGateway } from "./robot.js";
+export { BowAgentClient } from "./agent/bowAgentClient.js";
 
 let server: BOWServer | null = null;
 let config: ServerConfig;

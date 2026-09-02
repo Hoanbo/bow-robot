@@ -497,7 +497,25 @@ void sendTelemetry() {
     serializeJson(doc, jsonStr);
     webSocket.sendTXT(jsonStr);
 
-    Serial.printf("[TELEMETRY] Báo cáo: Pin=%d%% (%.2fV), RSSI=%ddBm, Uptime=%lus\n",
+    // V4.0 Standard Sensors Telemetry
+    StaticJsonDocument<384> sensorsDoc;
+    sensorsDoc["type"] = "robot.sensors_telemetry";
+    sensorsDoc["batteryPercent"] = currentBatteryPercent;
+    sensorsDoc["isCharging"] = false;
+    sensorsDoc["obstaclesDetected"] = false;
+    sensorsDoc["temperatureCelsius"] = 35.5;
+    JsonArray sensors = sensorsDoc.createNestedArray("activeSensors");
+    sensors.add("INMP441_MIC");
+    sensors.add("MAX98357A_DAC");
+    sensors.add("SSD1306_OLED");
+    sensors.add("PAN_TILT_SERVOS");
+    sensors.add("ADC_BATTERY");
+
+    String sensorsStr;
+    serializeJson(sensorsDoc, sensorsStr);
+    webSocket.sendTXT(sensorsStr);
+
+    Serial.printf("[TELEMETRY] Báo cáo V4.0: Pin=%d%% (%.2fV), RSSI=%ddBm, Uptime=%lus\n",
                   currentBatteryPercent, currentBatteryVoltage, rssi, uptimeSeconds);
 }
 
@@ -514,7 +532,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         case WStype_CONNECTED:
             Serial.println("[WS] Kết nối thành công tới BOW Agent V4.0!");
             currentExpression = EXP_HAPPY;
-            webSocket.sendTXT("{\"type\":\"client.register\",\"client\":\"bow-robot-esp32s3\",\"version\":\"4.0\"}");
+            webSocket.sendTXT("{\"type\":\"client.register\",\"client\":\"BOWCON\",\"channel\":\"ROBOT\",\"role\":\"owner\",\"version\":\"4.0.0\"}");
             sendTelemetry();
             break;
 
@@ -526,7 +544,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
             const char* msgType = doc["type"] | "";
 
             // 1. Nhận bản tin ngắt lời (Barge-in Interrupt)
-            if (strcmp(msgType, "robot.interrupt") == 0 || strcmp(msgType, "speech.interrupt") == 0) {
+            if (strcmp(msgType, "robot.interrupt") == 0 || strcmp(msgType, "speech.interrupt") == 0 || strcmp(doc["action"] | "", "stop_playback") == 0) {
                 handleBargeInInterrupt();
             }
 
@@ -534,7 +552,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
             else if (strcmp(msgType, "robot.emotion") == 0 || strcmp(msgType, "set_expression") == 0) {
                 const char* exp = doc["emotion"] | doc["parameters"]["expression"] | "neutral";
                 if (strcmp(exp, "happy") == 0) currentExpression = EXP_HAPPY;
-                else if (strcmp(exp, "curious") == 0) currentExpression = EXP_CURIOUS;
+                else if (strcmp(exp, "curious") == 0 || strcmp(exp, "surprised") == 0) currentExpression = EXP_CURIOUS;
                 else if (strcmp(exp, "thinking") == 0) currentExpression = EXP_THINKING;
                 else if (strcmp(exp, "listening") == 0) currentExpression = EXP_LISTENING;
                 else if (strcmp(exp, "speaking") == 0) currentExpression = EXP_SPEAKING;
@@ -545,7 +563,25 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
                 else currentExpression = EXP_NEUTRAL;
             }
 
-            // 3. Nhận lệnh di chuyển bánh xe (Locomotion)
+            // 3. Nhận lệnh định vị nguồn âm thanh AoA Sound Tracking
+            else if (strcmp(msgType, "robot.sound_direction") == 0) {
+                int angle = doc["angleAoA"] | doc["parameters"]["angleAoA"] | 0;
+                setHeadServo(currentTiltAngle, constrain(angle, -90, 90));
+            }
+
+            // 4. Nhận sự kiện chủ động (Morning briefing, Health reminder)
+            else if (strcmp(msgType, "robot.proactive_event") == 0) {
+                const char* eventName = doc["event"] | doc["parameters"]["event"] | "morning_briefing";
+                if (strcmp(eventName, "morning_briefing") == 0) {
+                    currentExpression = EXP_HAPPY;
+                    setHeadServo(10, 0);
+                } else {
+                    currentExpression = EXP_LISTENING;
+                    setHeadServo(10, 0);
+                }
+            }
+
+            // 5. Nhận lệnh di chuyển bánh xe (Locomotion)
             else if (strcmp(msgType, "robot.move") == 0) {
                 const char* dir = doc["direction"] | "stop";
                 int durationMs = doc["duration"] | 1000;
@@ -560,7 +596,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
                 else setMotorsSmooth(MOVE_STOP, 0, 0);
             }
 
-            // 4. Nhận lệnh cử động đầu (Head Servos)
+            // 6. Nhận lệnh cử động đầu (Head Servos)
             else if (strcmp(msgType, "robot.head") == 0 || strcmp(msgType, "move_head") == 0) {
                 int tilt = doc["tilt"] | doc["parameters"]["tilt"] | currentTiltAngle;
                 int pan = doc["pan"] | doc["parameters"]["pan"] | currentPanAngle;

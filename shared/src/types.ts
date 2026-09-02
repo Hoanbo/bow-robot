@@ -33,7 +33,16 @@ export interface RemoteRequest {
     version: string;
     requestId: string;
     sessionId: string;
-    type: "tool.execute" | "health.check" | "auth" | "heartbeat" | "robot.interrupt";
+    type:
+        | "tool.execute"
+        | "health.check"
+        | "auth"
+        | "heartbeat"
+        | "robot.interrupt"
+        | "robot.audio_stream"
+        | "robot.audio_in"
+        | "robot.sound_direction"
+        | "robot.sensors_telemetry";
     tool?: string;
     arguments?: Record<string, unknown>;
     token?: string;
@@ -43,7 +52,16 @@ export interface RemoteRequest {
 export interface RemoteResponse {
     version: string;
     requestId: string;
-    type: "tool.result" | "health.check" | "auth" | "error" | "heartbeat" | "robot.telemetry";
+    type:
+        | "tool.result"
+        | "health.check"
+        | "auth"
+        | "error"
+        | "heartbeat"
+        | "robot.telemetry"
+        | "robot.response"
+        | "robot.interrupt"
+        | "robot.proactive_event";
     success: boolean;
     result?: unknown;
     error?: string;
@@ -325,8 +343,73 @@ export interface RobotCommand {
         | "stop"
         | "interrupt"
         | "robot.move"
-        | "robot.interrupt";
+        | "robot.interrupt"
+        | "robot.response"
+        | "robot.proactive_event"
+        | "robot.sound_direction"
+        | "robot.sensors_telemetry";
     parameters: Record<string, unknown>;
+    timestamp: string;
+}
+
+export interface RobotSensorsTelemetryPayload {
+    type: "robot.sensors_telemetry";
+    batteryPercent: number;
+    isCharging: boolean;
+    obstaclesDetected: boolean;
+    temperatureCelsius: number;
+    activeSensors: string[];
+    timestamp: string;
+}
+
+export interface SoundDirectionPayload {
+    type: "robot.sound_direction";
+    micLeftEnergy?: number;
+    micRightEnergy?: number;
+    angleAoA: number; // -90 to +90 degrees
+    timestamp: string;
+}
+
+export interface AudioStreamPayload {
+    type: "robot.audio_stream" | "robot.audio_in";
+    audio: string; // Base64 PCM or WAV chunk
+    sampleRate?: number; // default 16000
+    channels?: number;   // default 1 (mono)
+    format?: "pcm16" | "wav";
+    timestamp: string;
+}
+
+export interface RobotInterruptPayload {
+    type: "robot.interrupt";
+    action: "stop_playback";
+    reason: "barge_in";
+    timestamp: string;
+    reflexDelayMs?: number;
+}
+
+export interface RobotResponsePayload {
+    type: "robot.response";
+    text: string;
+    audioBase64?: string;
+    emotion: RobotExpression;
+    servo?: {
+        panAngle: number;
+        tiltAngle: number;
+        speed?: number;
+    };
+    timestamp: string;
+}
+
+export interface ProactiveEventPayload {
+    type: "robot.proactive_event";
+    event: "morning_briefing" | "sedentary_reminder" | string;
+    speechText: string;
+    emotion: RobotExpression;
+    deskLight?: "on" | "off";
+    servo?: {
+        panAngle: number;
+        tiltAngle: number;
+    };
     timestamp: string;
 }
 

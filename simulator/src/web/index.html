@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOW ROBOT V4.0 — Virtual Desktop Robot & OLED Simulator</title>
+    <title>BOWCON V4.0 — The Fully Autonomous Embodied Companion</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,12 +12,12 @@
         <header class="header">
             <div class="logo-group">
                 <div class="status-dot connected" id="status-dot"></div>
-                <h1>BOW ROBOT V4.0</h1>
-                <span class="badge">ESP32-S3 SIMULATOR</span>
+                <h1>BOWCON V4.0</h1>
+                <span class="badge">ESP32-S3 N16R8 KIT (INMP441 + MAX98357 + N20 MOTORS)</span>
             </div>
             <div class="system-stats">
-                <span class="stat-item" id="battery-stat">🔋 PIN: 95% (4.12V)</span>
-                <span class="stat-item" id="rssi-stat">📶 RSSI: -52 dBm</span>
+                <span class="stat-item" id="battery-stat">🔋 PIN: 95% (4.15V)</span>
+                <span class="stat-item" id="rssi-stat">📶 RSSI: -50 dBm</span>
                 <span class="stat-item" id="uptime-stat">⏱️ UPTIME: 0s</span>
                 <span class="stat-item" id="fps-counter">60 FPS</span>
             </div>
@@ -29,7 +29,7 @@
             <section class="robot-face-card">
                 <div class="oled-frame">
                     <div class="oled-header">
-                        <span class="oled-label">SSD1306 OLED (128x64)</span>
+                        <span class="oled-label">SSD1306/SSD1315 OLED (128x64)</span>
                         <span class="oled-res">1-BIT MONOCHROME / CYAN</span>
                     </div>
                     <div class="canvas-wrapper">
@@ -45,7 +45,7 @@
                 <!-- Servo & Head Angle Visualizer -->
                 <div class="servo-controls">
                     <div class="servo-item">
-                        <label>PAN (SERVO 1): <span id="pan-val">0°</span></label>
+                        <label>PAN (SERVO 1 / N20): <span id="pan-val">0°</span></label>
                         <input type="range" id="pan-slider" min="-90" max="90" value="0">
                     </div>
                     <div class="servo-item">
@@ -54,10 +54,28 @@
                     </div>
                 </div>
 
+                <!-- Sound Tracking AoA Simulator -->
+                <div class="servo-controls" style="margin-top: 8px;">
+                    <div class="servo-item">
+                        <label>🎯 SOUND TRACKING AoA: <span id="aoa-val">0°</span></label>
+                        <input type="range" id="aoa-slider" min="-90" max="90" value="0">
+                    </div>
+                </div>
+
                 <!-- Fast Interrupt / Barge-In Button -->
                 <div style="margin-top: 12px;">
                     <button id="interrupt-btn" class="btn btn-secondary" style="width: 100%; background: #ff4757; color: #fff; font-weight: bold;">
-                        ⚡ BARGE-IN INTERRUPT (&lt;10ms FLUSH)
+                        ⚡ BARGE-IN INTERRUPT (&lt;80ms MUTE MAX98357 &amp; TILT +10°)
+                    </button>
+                </div>
+
+                <!-- Proactive Event Triggers -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                    <button id="morning-btn" class="btn btn-secondary" style="background: #2ed573; color: #fff; font-size: 11px;">
+                        🌅 BẢN TIN SÁNG 8:00
+                    </button>
+                    <button id="health-btn" class="btn btn-secondary" style="background: #1e90ff; color: #fff; font-size: 11px;">
+                        💧 NHẮC NGHỈ &gt;45P
                     </button>
                 </div>
             </section>
@@ -66,11 +84,11 @@
             <section class="control-panel">
                 <!-- Voice & Audio Bridge -->
                 <div class="panel-box audio-box">
-                    <h3>🎤 TIẾNG VIỆT FULL-DUPLEX SPEECH INTERFACE</h3>
+                    <h3>🎤 TIẾNG VIỆT FULL-DUPLEX SPEECH (BOWCON ⚔️ PHỤNG SỰ NGÀI)</h3>
                     <div class="audio-actions">
                         <button id="mic-btn" class="btn btn-mic">
                             <span class="mic-icon">🎙️</span>
-                            <span id="mic-btn-text">BẤM ĐỂ NÓI (MIC)</span>
+                            <span id="mic-btn-text">BẤM ĐỂ NÓI (MIC INMP441)</span>
                         </button>
                         <button id="listen-toggle-btn" class="btn btn-secondary">
                             <span>VAD AUTO-LISTEN</span>
@@ -80,29 +98,31 @@
                         <div class="audio-level-bar" id="audio-level-bar"></div>
                     </div>
                     <div class="stt-preview" id="stt-preview">
-                        <em>Nói tiếng Việt (ví dụ: "Chào bạn", "Mở Chrome", "Mở Photoshop", "Giá Canva bao nhiêu?")...</em>
+                        <em>Thưa Ngài, xin hãy cất lệnh (ví dụ: "Chào BOWCON", "Mở Chrome", "Báo cáo tiến độ", "Hôm nay thời tiết thế nào?")...</em>
                     </div>
                 </div>
 
                 <!-- Manual Query Input -->
                 <div class="panel-box query-box">
-                    <h3>💬 GỬI LỆNH TRỰC TIẾP TỚI BOW AGENT</h3>
+                    <h3>💬 GỬI LỆNH TRỰC TIẾP TỚI BOW AGENT V4.0</h3>
                     <form id="query-form" class="query-form">
-                        <input type="text" id="query-input" placeholder="Nhập câu hỏi hoặc lệnh máy tính..." autocomplete="off">
+                        <input type="text" id="query-input" placeholder="Ngài nhập câu hỏi hoặc chỉ thị cho BOWCON..." autocomplete="off">
                         <button type="submit" class="btn btn-primary">GỬI</button>
                     </form>
                 </div>
 
                 <!-- 10 Expression Switcher Grid -->
                 <div class="panel-box expression-box">
-                    <h3>🎭 BỘ 10 BIỂU CẢM OLED V4.0 (10 EMOTIONS)</h3>
+                    <h3>🎭 BIỂU CẢM MẮT OLED V4.0 (6 CORE + MỞ RỘNG)</h3>
                     <div class="expression-btn-grid">
                         <button class="btn-exp active" data-exp="neutral">🙂 NEUTRAL</button>
                         <button class="btn-exp" data-exp="happy">😊 HAPPY</button>
-                        <button class="btn-exp" data-exp="curious">🧐 CURIOUS</button>
-                        <button class="btn-exp" data-exp="thinking">🤔 THINKING</button>
                         <button class="btn-exp" data-exp="listening">👂 LISTENING</button>
+                        <button class="btn-exp" data-exp="thinking">🤔 THINKING</button>
                         <button class="btn-exp" data-exp="speaking">🗣️ SPEAKING</button>
+                        <button class="btn-exp" data-exp="sleeping">😴 SLEEPING</button>
+                        <button class="btn-exp" data-exp="surprised">😲 SURPRISED</button>
+                        <button class="btn-exp" data-exp="curious">🧐 CURIOUS</button>
                         <button class="btn-exp" data-exp="love">💖 LOVE</button>
                         <button class="btn-exp" data-exp="matrix">💻 MATRIX</button>
                         <button class="btn-exp" data-exp="error">❌ ERROR</button>
@@ -113,7 +133,7 @@
                 <!-- Live Telemetry Console -->
                 <div class="panel-box log-box">
                     <div class="log-header">
-                        <h3>📟 REALTIME TELEMETRY LOG</h3>
+                        <h3>📟 REALTIME SENSORS TELEMETRY &amp; EVENT LOG</h3>
                         <button id="clear-log-btn" class="btn-sm">Xóa</button>
                     </div>
                     <div class="log-content" id="log-content"></div>
