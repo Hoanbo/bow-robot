@@ -1,5 +1,5 @@
-// Virtual Desktop Robot Simulator Client
-// OLED 128x64 Animated Eyes Renderer, Web Audio Mic, and Telemetry
+// Virtual Desktop Robot Simulator Client V4.0
+// OLED 128x64 10-Expression Animated Eyes Renderer, Web Audio Mic, and Realtime Telemetry
 
 class VirtualRobotApp {
     constructor() {
@@ -10,10 +10,6 @@ class VirtualRobotApp {
         this.currentMode = "idle";
         this.panTilt = { pan: 0, tilt: 0 };
         this.isRecording = false;
-        this.mediaRecorder = null;
-        this.audioChunks = [];
-        this.audioContext = null;
-        this.analyser = null;
         this.speechRecognition = null;
         this.lastFrameTime = performance.now();
         this.fpsCounter = document.getElementById("fps-counter");
@@ -25,6 +21,9 @@ class VirtualRobotApp {
         this.isBlinking = false;
         this.nextBlinkTime = Date.now() + 2000;
         this.thinkAngle = 0;
+        this.matrixTicks = 0;
+        this.lovePhase = 0;
+        this.speakPhase = 0;
 
         this.initUI();
         this.initWebSocket();
@@ -51,16 +50,27 @@ class VirtualRobotApp {
             this.sendRobotCommand("move_head", { pan: this.panTilt.pan, tilt: this.panTilt.tilt });
         });
 
-        // Expression buttons
+        // 10 Expression buttons
         document.querySelectorAll(".btn-exp").forEach((btn) => {
             btn.addEventListener("click", () => {
                 const exp = btn.getAttribute("data-exp");
                 this.setExpression(exp);
                 this.sendRobotCommand("set_expression", { expression: exp });
-                document.querySelectorAll(".btn-exp").forEach(b => b.classList.remove("active"));
+                document.querySelectorAll(".btn-exp").forEach((b) => b.classList.remove("active"));
                 btn.classList.add("active");
             });
         });
+
+        // Barge-in Interrupt Button
+        const interruptBtn = document.getElementById("interrupt-btn");
+        if (interruptBtn) {
+            interruptBtn.addEventListener("click", () => {
+                this.log("⚡ Triggering Barge-in interrupt...", "warn");
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({ type: "robot.interrupt", timestamp: new Date().toISOString() }));
+                }
+            });
+        }
 
         // Mic Push-to-Talk
         const micBtn = document.getElementById("mic-btn");
@@ -93,8 +103,7 @@ class VirtualRobotApp {
 
         this.ws.onopen = () => {
             document.getElementById("status-dot").classList.add("connected");
-            document.getElementById("gateway-status").textContent = "GATEWAY: CONNECTED";
-            this.log("Connected to Robot Gateway", "action");
+            this.log("Connected to BOW Robot V4.0 Gateway", "action");
         };
 
         this.ws.onmessage = (event) => {
@@ -108,9 +117,8 @@ class VirtualRobotApp {
 
         this.ws.onclose = () => {
             document.getElementById("status-dot").classList.remove("connected");
-            document.getElementById("gateway-status").textContent = "GATEWAY: DISCONNECTED";
-            this.log("Disconnected from Gateway. Retrying in 3s...", "warn");
-            setTimeout(() => this.initWebSocket(), 3000);
+            this.log("Disconnected from Gateway. Retrying in 2.5s...", "warn");
+            setTimeout(() => this.initWebSocket(), 2500);
         };
     }
 
@@ -167,19 +175,6 @@ class VirtualRobotApp {
         if (this.speechRecognition) {
             try { this.speechRecognition.start(); } catch {}
         }
-
-        // Setup audio level visualizer
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const source = this.audioContext.createMediaStreamSource(stream);
-            this.analyser = this.audioContext.createAnalyser();
-            this.analyser.fftSize = 64;
-            source.connect(this.analyser);
-            this.monitorAudioLevel();
-        } catch (err) {
-            this.log(`Microphone permission error: ${err.message}`, "error");
-        }
     }
 
     stopMic() {
@@ -196,24 +191,11 @@ class VirtualRobotApp {
         document.getElementById("audio-level-bar").style.width = "0%";
     }
 
-    monitorAudioLevel() {
-        if (!this.isRecording || !this.analyser) return;
-        const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-        this.analyser.getByteFrequencyData(dataArray);
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-        const average = sum / dataArray.length;
-        const percent = Math.min(100, Math.round((average / 128) * 100));
-        document.getElementById("audio-level-bar").style.width = `${percent}%`;
-        requestAnimationFrame(() => this.monitorAudioLevel());
-    }
-
     async handleUserQuery(text) {
         this.log(`User query: "${text}"`, "info");
         this.setMode("thinking");
         this.setExpression("thinking");
 
-        // Forward query to Simulator server
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({
                 type: "user.query",
@@ -227,20 +209,40 @@ class VirtualRobotApp {
         if (msg.type === "robot.state" && msg.state) {
             if (msg.state.expression) this.setExpression(msg.state.expression);
             if (msg.state.mode) this.setMode(msg.state.mode);
+            if (msg.state.headPosition) {
+                this.panTilt = msg.state.headPosition;
+                document.getElementById("pan-slider").value = this.panTilt.pan;
+                document.getElementById("tilt-slider").value = this.panTilt.tilt;
+                document.getElementById("pan-val").textContent = `${this.panTilt.pan}°`;
+                document.getElementById("tilt-val").textContent = `${this.panTilt.tilt}°`;
+            }
+        } else if (msg.type === "robot.telemetry") {
+            const battEl = document.getElementById("battery-stat");
+            const rssiEl = document.getElementById("rssi-stat");
+            const uptimeEl = document.getElementById("uptime-stat");
+            if (battEl && msg.battery !== undefined) {
+                battEl.textContent = `🔋 PIN: ${msg.battery}% ${msg.voltage ? `(${msg.voltage.toFixed(2)}V)` : ""}`;
+            }
+            if (rssiEl && msg.wifiRssi !== undefined) {
+                rssiEl.textContent = `📶 RSSI: ${msg.wifiRssi} dBm`;
+            }
+            if (uptimeEl && msg.uptime !== undefined) {
+                uptimeEl.textContent = `⏱️ UPTIME: ${msg.uptime}s`;
+            }
+        } else if (msg.type === "robot.interrupt") {
+            this.log("⚡ [BARGE-IN] Received interrupt! Head tilted, listening mode active", "warn");
+            this.setExpression("listening");
+            this.setMode("listening");
         } else if (msg.type === "agent.response") {
             this.log(`BOW Brain: "${msg.text}"`, "action");
             if (msg.expression) this.setExpression(msg.expression);
             this.setMode("speaking");
 
-            // Play TTS audio if provided
             if (msg.audioBase64) {
                 this.playAudioBase64(msg.audioBase64, msg.mimeType || "audio/mpeg");
             } else {
-                // Synthesize browser voice fallback or speak duration
                 this.speakBrowserVoice(msg.text);
             }
-        } else if (msg.type === "desktop_action") {
-            this.log(`Desktop Action Dispatched: [${msg.action}] ${msg.target || ""}`, "action");
         }
     }
 
@@ -292,6 +294,7 @@ class VirtualRobotApp {
 
     log(text, level = "info") {
         const logContent = document.getElementById("log-content");
+        if (!logContent) return;
         const line = document.createElement("div");
         line.className = `log-line ${level}`;
         const time = new Date().toLocaleTimeString();
@@ -308,7 +311,6 @@ class VirtualRobotApp {
             this.updateEyeAnimation(dt);
             this.drawOLED();
 
-            // Calculate FPS
             this.frameCount++;
             if (time - this.fpsTimer >= 1000) {
                 this.fpsCounter.textContent = `${this.frameCount} FPS`;
@@ -323,21 +325,27 @@ class VirtualRobotApp {
 
     updateEyeAnimation(dt) {
         const now = Date.now();
-        if (!this.isBlinking && now >= this.nextBlinkTime && this.currentExpression !== "sleeping") {
-            this.isBlinking = true;
-            this.blinkProgress = 0;
-        }
-
-        if (this.isBlinking) {
-            this.blinkProgress += dt / 130;
-            if (this.blinkProgress >= 1) {
-                this.isBlinking = false;
+        const skipBlink = ["sleeping", "matrix", "error", "battery_low"].includes(this.currentExpression);
+        if (!skipBlink) {
+            if (!this.isBlinking && now >= this.nextBlinkTime) {
+                this.isBlinking = true;
                 this.blinkProgress = 0;
-                this.nextBlinkTime = now + 2500 + Math.random() * 3500;
+            }
+
+            if (this.isBlinking) {
+                this.blinkProgress += dt / 130;
+                if (this.blinkProgress >= 1) {
+                    this.isBlinking = false;
+                    this.blinkProgress = 0;
+                    this.nextBlinkTime = now + 2500 + Math.random() * 3500;
+                }
             }
         }
 
-        this.thinkAngle += (dt / 1000) * 3;
+        this.thinkAngle += (dt / 1000) * 3.5;
+        this.speakPhase += (dt / 1000) * 8;
+        this.lovePhase += (dt / 1000) * 4;
+        this.matrixTicks += dt;
     }
 
     drawOLED() {
@@ -364,11 +372,22 @@ class VirtualRobotApp {
 
         const blinkClose = this.isBlinking ? (this.blinkProgress <= 0.5 ? this.blinkProgress * 2 : (1 - this.blinkProgress) * 2) : 0;
 
-        // Draw Left & Right Eyes based on expression
+        // Draw Left & Right Eyes based on 10 Expressions
         this.drawSingleEye(ctx, leftEyeCenter.x, leftEyeCenter.y, scaleX, scaleY, blinkClose, false);
-        this.drawSingleEye(ctx, rightEyeCenter.x, rightEyeCenter.y, scaleX, scaleY, true);
+        this.drawSingleEye(ctx, rightEyeCenter.x, rightEyeCenter.y, scaleX, scaleY, blinkClose, true);
 
-        ctx.shadowBlur = 0; // reset
+        // Battery Low Extra Bar
+        if (this.currentExpression === "battery_low" && Math.floor(Date.now() / 500) % 2 === 0) {
+            ctx.strokeStyle = "#ff4757";
+            ctx.fillStyle = "#ff4757";
+            ctx.shadowColor = "#ff4757";
+            ctx.lineWidth = 2 * scaleX;
+            ctx.strokeRect(44 * scaleX, 52 * scaleY, 40 * scaleX, 10 * scaleY);
+            ctx.fillRect(84 * scaleX, 55 * scaleY, 3 * scaleX, 4 * scaleY);
+            ctx.fillRect(46 * scaleX, 54 * scaleY, 8 * scaleX, 6 * scaleY);
+        }
+
+        ctx.shadowBlur = 0;
     }
 
     drawSingleEye(ctx, cx, cy, sx, sy, blinkRatio, isRight) {
@@ -376,14 +395,19 @@ class VirtualRobotApp {
         let eyeW = 28 * sx;
         let eyeH = 34 * sy;
 
-        if (blinkRatio > 0) {
+        if (blinkRatio > 0 && !["sleeping", "matrix", "error", "battery_low"].includes(exp)) {
             eyeH = Math.max(4, eyeH * (1 - blinkRatio));
+            const radius = Math.min(eyeW, eyeH) / 2;
+            ctx.beginPath();
+            ctx.roundRect(cx - eyeW / 2, cy - eyeH / 2, eyeW, eyeH, radius);
+            ctx.fill();
+            return;
         }
 
         ctx.beginPath();
 
+        // 1. EXP_HAPPY: (^ _ ^)
         if (exp === "happy") {
-            // Crescent happy eye (inverted arc)
             ctx.arc(cx, cy + 4 * sy, eyeW / 2, Math.PI, 0, false);
             ctx.lineWidth = 8 * sy;
             ctx.strokeStyle = "#38ef7d";
@@ -391,35 +415,112 @@ class VirtualRobotApp {
             return;
         }
 
-        if (exp === "sleeping") {
-            // Sleeping closed horizontal eyelid
-            ctx.roundRect(cx - eyeW / 2, cy - 3 * sy, eyeW, 6 * sy, 3 * sy);
+        // 2. EXP_CURIOUS: one eye raised high, one slightly squinched
+        if (exp === "curious") {
+            if (!isRight) {
+                eyeW = 34 * sx;
+                eyeH = 38 * sy;
+                ctx.roundRect(cx - eyeW / 2, cy - eyeH / 2 - 4 * sy, eyeW, eyeH, 10 * sx);
+            } else {
+                eyeW = 24 * sx;
+                eyeH = 20 * sy;
+                ctx.roundRect(cx - eyeW / 2, cy - eyeH / 2 + 2 * sy, eyeW, eyeH, 6 * sx);
+            }
             ctx.fill();
             return;
         }
 
-        if (exp === "surprised") {
-            eyeW = 34 * sx;
-            eyeH = 42 * sy;
-            ctx.ellipse(cx, cy, eyeW / 2, eyeH / 2, 0, 0, Math.PI * 2);
-            ctx.fill();
-            return;
-        }
-
+        // 3. EXP_THINKING: Revolving pupils (O _ o)
         if (exp === "thinking") {
-            const pupilX = Math.cos(this.thinkAngle) * 5 * sx;
-            const pupilY = -6 * sy;
-            ctx.roundRect(cx - eyeW / 2, cy - (eyeH * 0.8) / 2, eyeW, eyeH * 0.8, 8 * sx);
+            const pX = Math.cos(this.thinkAngle) * 5 * sx;
+            const pY = Math.sin(this.thinkAngle) * 5 * sy;
+            ctx.roundRect(cx - eyeW / 2, cy - eyeH / 2, eyeW, eyeH, 8 * sx);
+            ctx.fill();
+            // Pupil cutout
+            ctx.fillStyle = "#030a06";
+            ctx.beginPath();
+            ctx.arc(cx + pX, cy + pY, 5 * sx, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#38ef7d";
+            return;
+        }
+
+        // 4. EXP_LISTENING: Big attentive round eyes
+        if (exp === "listening") {
+            eyeW = 32 * sx;
+            eyeH = 38 * sy;
+            ctx.roundRect(cx - eyeW / 2, cy - eyeH / 2, eyeW, eyeH, 12 * sx);
+            ctx.fill();
+            // Focused pupil
+            ctx.fillStyle = "#030a06";
+            ctx.beginPath();
+            ctx.arc(cx, cy + 2 * sy, 6 * sx, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#38ef7d";
+            return;
+        }
+
+        // 5. EXP_SPEAKING: Wave reactive bouncing eyes
+        if (exp === "speaking") {
+            const bounce = Math.abs(Math.sin(this.speakPhase) * 12 * sy);
+            eyeH = 26 * sy + bounce;
+            ctx.roundRect(cx - eyeW / 2, cy - eyeH / 2, eyeW, eyeH, 8 * sx);
             ctx.fill();
             return;
         }
 
-        if (exp === "speaking") {
-            const osc = Math.sin(Date.now() / 120) * 6 * sy;
-            eyeH = Math.max(16 * sy, eyeH + osc);
+        // 6. EXP_LOVE: (<3 _ <3)
+        if (exp === "love") {
+            const pulse = Math.sin(this.lovePhase) * 3 * sx;
+            ctx.fillStyle = "#ff7675";
+            ctx.shadowColor = "#ff7675";
+            const hW = 28 * sx + pulse;
+            const topY = cy - 8 * sy;
+            ctx.beginPath();
+            ctx.arc(cx - hW / 4, topY, hW / 4, Math.PI, 0, false);
+            ctx.arc(cx + hW / 4, topY, hW / 4, Math.PI, 0, false);
+            ctx.lineTo(cx, cy + 14 * sy + pulse);
+            ctx.closePath();
+            ctx.fill();
+            return;
         }
 
-        // Standard Rounded Pill Eye (Neutral, Blink, Listening, Speaking)
+        // 7. EXP_MATRIX: Digital matrix code rain
+        if (exp === "matrix") {
+            ctx.strokeStyle = "#2ed573";
+            ctx.strokeRect(cx - eyeW / 2, cy - eyeH / 2, eyeW, eyeH);
+            for (let col = 0; col < 5; col++) {
+                const dropY = ((this.matrixTicks / 80 + col * 7) % 24) * sy;
+                ctx.fillStyle = "#2ed573";
+                ctx.fillRect(cx - eyeW / 2 + 3 * sx + col * 5 * sx, cy - eyeH / 2 + dropY, 3 * sx, 4 * sy);
+            }
+            return;
+        }
+
+        // 8. EXP_ERROR: (X _ X)
+        if (exp === "error") {
+            ctx.strokeStyle = "#ff4757";
+            ctx.shadowColor = "#ff4757";
+            ctx.lineWidth = 6 * sx;
+            ctx.beginPath();
+            ctx.moveTo(cx - 14 * sx, cy - 14 * sy);
+            ctx.lineTo(cx + 14 * sx, cy + 14 * sy);
+            ctx.moveTo(cx - 14 * sx, cy + 14 * sy);
+            ctx.lineTo(cx + 14 * sx, cy - 14 * sy);
+            ctx.stroke();
+            return;
+        }
+
+        // 9. EXP_BATTERY_LOW: Drooping sad eyes
+        if (exp === "battery_low") {
+            ctx.fillStyle = "#ffa502";
+            ctx.shadowColor = "#ffa502";
+            ctx.roundRect(cx - eyeW / 2, cy - 6 * sy, eyeW, 16 * sy, 4 * sx);
+            ctx.fill();
+            return;
+        }
+
+        // 10. EXP_NEUTRAL (Default)
         const radius = Math.min(eyeW, eyeH) / 2;
         ctx.roundRect(cx - eyeW / 2, cy - eyeH / 2, eyeW, eyeH, radius);
         ctx.fill();

@@ -1,6 +1,6 @@
 /**
- * Keyboard Controller
- * Controls keyboard input, key presses, and text typing
+ * Keyboard Controller V4.0
+ * Controls keyboard input, key presses, safe chat replies (Zalo/Telegram/Facebook), and text typing
  */
 
 import { Logger, ToolResult, getCurrentTimestamp } from "@bow/shared";
@@ -38,6 +38,78 @@ export class KeyboardController {
                 success: false,
                 action: "keyboard_type",
                 error: error instanceof Error ? error.message : "Unknown error",
+                timestamp: getCurrentTimestamp(),
+                duration: Date.now() - startTime,
+                recoverable: true,
+            };
+        }
+    }
+
+    /**
+     * Safe Unicode / Vietnamese typing via Clipboard paste to avoid SendKeys character corruption
+     */
+    async typeSafe(text: string): Promise<ToolResult> {
+        const startTime = Date.now();
+        try {
+            this.logger.debug("Safe typing via clipboard paste", { length: text.length });
+            if (!isWindows()) throw new Error("Keyboard control currently requires Windows");
+
+            const psScript = `
+                Set-Clipboard -Value ${psQuote(text)};
+                Start-Sleep -Milliseconds 50;
+                $shell = New-Object -ComObject WScript.Shell;
+                $shell.SendKeys('^v');
+            `;
+            await runPowerShell(psScript, 5000);
+
+            return {
+                success: true,
+                action: "keyboard_type_safe",
+                result: { text, length: text.length },
+                timestamp: getCurrentTimestamp(),
+                duration: Date.now() - startTime,
+            };
+        } catch (error) {
+            return {
+                success: false,
+                action: "keyboard_type_safe",
+                error: error instanceof Error ? error.message : "Safe typing failed",
+                timestamp: getCurrentTimestamp(),
+                duration: Date.now() - startTime,
+                recoverable: true,
+            };
+        }
+    }
+
+    /**
+     * Safe chat reply into active messaging window (Zalo, Telegram, Facebook Messenger)
+     */
+    async safeChatReply(text: string, sendEnter: boolean = true): Promise<ToolResult> {
+        const startTime = Date.now();
+        try {
+            this.logger.debug("Executing safe chat reply", { textLength: text.length, sendEnter });
+
+            // 1. Paste text safely
+            await this.typeSafe(text);
+
+            // 2. Press Enter if requested
+            if (sendEnter) {
+                await new Promise((resolve) => setTimeout(resolve, 80));
+                await this.press("Return");
+            }
+
+            return {
+                success: true,
+                action: "safe_chat_reply",
+                result: { text, sent: sendEnter },
+                timestamp: getCurrentTimestamp(),
+                duration: Date.now() - startTime,
+            };
+        } catch (error) {
+            return {
+                success: false,
+                action: "safe_chat_reply",
+                error: error instanceof Error ? error.message : "Safe chat reply failed",
                 timestamp: getCurrentTimestamp(),
                 duration: Date.now() - startTime,
                 recoverable: true,
@@ -96,8 +168,6 @@ export class KeyboardController {
         const startTime = Date.now();
         try {
             this.logger.debug("Backspace", { count });
-
-            // TODO: Press backspace multiple times
             for (let i = 0; i < count; i++) {
                 await this.press("Backspace");
             }
@@ -125,8 +195,6 @@ export class KeyboardController {
         const startTime = Date.now();
         try {
             this.logger.debug("Delete", { count });
-
-            // TODO: Press delete multiple times
             for (let i = 0; i < count; i++) {
                 await this.press("Delete");
             }

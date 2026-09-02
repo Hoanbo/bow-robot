@@ -1,6 +1,6 @@
 /**
- * Core Type Definitions for BOW ROBOT V1
- * Used across all modules (bow-server, bow-remote-agent, simulator)
+ * Core Type Definitions for BOW ROBOT V4.0
+ * Used across all modules (bow-server, bow-remote-agent, simulator, embedded)
  */
 
 // ============================================================================
@@ -33,7 +33,7 @@ export interface RemoteRequest {
     version: string;
     requestId: string;
     sessionId: string;
-    type: "tool.execute" | "health.check" | "auth" | "heartbeat";
+    type: "tool.execute" | "health.check" | "auth" | "heartbeat" | "robot.interrupt";
     tool?: string;
     arguments?: Record<string, unknown>;
     token?: string;
@@ -43,7 +43,7 @@ export interface RemoteRequest {
 export interface RemoteResponse {
     version: string;
     requestId: string;
-    type: "tool.result" | "health.check" | "auth" | "error" | "heartbeat";
+    type: "tool.result" | "health.check" | "auth" | "error" | "heartbeat" | "robot.telemetry";
     success: boolean;
     result?: unknown;
     error?: string;
@@ -140,6 +140,7 @@ export interface ScreenInfo {
     height: number;
     text: string[];
     elements: ScreenElement[];
+    notifications?: string[];
     timestamp: string;
 }
 
@@ -267,29 +268,46 @@ export interface SafetyContext {
 }
 
 // ============================================================================
-// ROBOT GATEWAY TYPES
+// ROBOT GATEWAY & TELEMETRY TYPES (V4.0)
 // ============================================================================
 
 export type RobotExpression =
     | "neutral"
     | "blink"
     | "happy"
+    | "curious"
     | "thinking"
     | "surprised"
     | "sleeping"
     | "listening"
     | "speaking"
-    | "error";
+    | "love"
+    | "matrix"
+    | "error"
+    | "battery_low";
 
 export interface ServoPosition {
-    pan: number;  // Horizontal angle: -90 to +90 degrees (or 0 to 180)
-    tilt: number; // Vertical angle: -45 to +45 degrees (or 45 to 135)
+    pan: number;  // Horizontal angle: -90 to +90 degrees
+    tilt: number; // Vertical angle: -45 to +45 degrees
+}
+
+export interface RobotTelemetryPayload {
+    type: "robot.telemetry";
+    battery: number;
+    voltage?: number;
+    wifiRssi: number;
+    uptime: number;
+    expression?: number | string;
+    headPosition?: ServoPosition;
 }
 
 export interface RobotState {
     mode: "idle" | "listening" | "thinking" | "executing" | "speaking" | "error";
     expression?: RobotExpression | string;
     battery?: number;
+    voltage?: number;
+    wifiRssi?: number;
+    uptime?: number;
     headPosition?: ServoPosition;
     connected: boolean;
     lastAudioLevel?: number;
@@ -297,7 +315,17 @@ export interface RobotState {
 
 export interface RobotCommand {
     id: string;
-    type: "move_head" | "move_arm" | "speak" | "listen" | "set_expression" | "desktop_action" | "stop";
+    type:
+        | "move_head"
+        | "move_arm"
+        | "speak"
+        | "listen"
+        | "set_expression"
+        | "desktop_action"
+        | "stop"
+        | "interrupt"
+        | "robot.move"
+        | "robot.interrupt";
     parameters: Record<string, unknown>;
     timestamp: string;
 }
@@ -308,21 +336,31 @@ export interface DesktopActionPayload {
         | "open_chrome"
         | "open_url"
         | "browser_search"
+        | "browser_open"
+        | "browser_navigate"
+        | "browser_screenshot"
         | "mouse_click"
         | "mouse_move"
+        | "mouse_double_click"
         | "mouse_scroll"
         | "keyboard_type"
+        | "keyboard_type_safe"
+        | "safe_chat_reply"
         | "keyboard_press"
         | "keyboard_hotkey"
         | "screenshot"
         | "get_screen_info"
+        | "inspect_screen_ocr"
+        | "inspect_screen_notifications"
         | "get_windows"
         | "focus_window"
         | "close_app"
         | "file_read"
         | "file_write"
         | "file_list"
+        | "file_search"
         | "terminal_execute"
+        | "terminal_get_info"
         | "system_shutdown"
         | "system_restart";
     target?: string;
@@ -335,7 +373,9 @@ export interface DesktopActionPayload {
     command?: string;
     path?: string;
     content?: string;
+    platform?: string;
     modifiers?: string[];
+    timeoutMs?: number;
     [key: string]: unknown;
 }
 

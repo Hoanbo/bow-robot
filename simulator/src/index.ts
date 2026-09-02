@@ -1,6 +1,7 @@
 /**
- * BOW Robot Simulator / Virtual Desktop Robot Gateway (Port 3002)
+ * BOW Robot Simulator / Virtual Desktop Robot Gateway V4.0 (Port 3002)
  * Serves the interactive 128x64 OLED Cyberpunk Web GUI and bridges audio & commands to BOW Server.
+ * Supports Barge-in interrupt, 10 OLED eye expressions, and periodic telemetry.
  */
 import { Logger, RobotCommand, RobotState, ROBOT_STATES, generateSessionId, getCurrentTimestamp } from "@bow/shared";
 import { WebSocketServer, WebSocket } from "ws";
@@ -21,13 +22,20 @@ const port = Number(process.env.ROBOT_SIMULATOR_PORT || 3002);
 const bowServerUrl = process.env.BOW_SERVER_HTTP_URL || "http://127.0.0.1:3000";
 
 const eyesEngine = new AnimatedEyesEngine();
+let activeSpeakTimeout: NodeJS.Timeout | null = null;
+
 let state: RobotState = {
     mode: "idle",
     connected: true,
     expression: "neutral",
-    battery: 100,
+    battery: 95,
+    voltage: 4.12,
+    wifiRssi: -52,
+    uptime: 0,
     headPosition: { pan: 0, tilt: 0 },
 };
+
+const startTime = Date.now();
 
 // Locate web static folder (support both src/web and dist/web)
 const webDir = fs.existsSync(path.join(__dirname, "web"))
@@ -43,10 +51,36 @@ function broadcast(server: WebSocketServer, payloadObj: any): void {
     }
 }
 
+function handleInterrupt(server: WebSocketServer): void {
+    if (activeSpeakTimeout) {
+        clearTimeout(activeSpeakTimeout);
+        activeSpeakTimeout = null;
+    }
+    const currentTilt = (state.headPosition?.tilt || 0) + 10;
+    state = {
+        ...state,
+        mode: ROBOT_STATES.LISTENING,
+        expression: "listening",
+        headPosition: { pan: state.headPosition?.pan || 0, tilt: Math.min(currentTilt, 45) },
+    };
+    eyesEngine.setExpression("listening");
+    eyesEngine.setPanTilt(state.headPosition!);
+    logger.info("⚡ [BARGE-IN] Interrupted! Switching to listening + head tilt");
+    broadcast(server, { type: "robot.interrupt", timestamp: getCurrentTimestamp() });
+    broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
+}
+
 async function handleCommand(command: RobotCommand, server: WebSocketServer): Promise<void> {
     logger.info("Robot command received", { type: command.type });
 
+    if (command.type === "interrupt" || command.type === "robot.interrupt") {
+        handleInterrupt(server);
+        return;
+    }
+
     if (command.type === "speak") {
+        if (activeSpeakTimeout) clearTimeout(activeSpeakTimeout);
+
         state = { ...state, mode: ROBOT_STATES.SPEAKING, expression: "speaking" };
         eyesEngine.setExpression("speaking");
         broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
@@ -59,10 +93,13 @@ async function handleCommand(command: RobotCommand, server: WebSocketServer): Pr
         });
 
         logger.info("BOW speaks", { text: String(command.parameters.text || "") });
-        await new Promise((resolve) => setTimeout(resolve, Number(command.parameters.durationMs) || 1200));
-        state = { ...state, mode: ROBOT_STATES.IDLE, expression: "neutral" };
-        eyesEngine.setExpression("neutral");
-        broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
+        const duration = Number(command.parameters.durationMs) || 1200;
+        activeSpeakTimeout = setTimeout(() => {
+            state = { ...state, mode: ROBOT_STATES.IDLE, expression: "neutral" };
+            eyesEngine.setExpression("neutral");
+            broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
+            activeSpeakTimeout = null;
+        }, duration);
     } else if (command.type === "listen") {
         state = { ...state, mode: ROBOT_STATES.LISTENING, expression: "listening" };
         eyesEngine.setExpression("listening");
@@ -78,6 +115,12 @@ async function handleCommand(command: RobotCommand, server: WebSocketServer): Pr
         state = { ...state, headPosition: { pan, tilt } };
         eyesEngine.setPanTilt({ pan, tilt });
         broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
+    } else if (command.type === "robot.move") {
+        const dir = String(command.parameters.direction || "stop");
+        logger.info("Robot move executing", { dir, speed: command.parameters.speed });
+        state = { ...state, mode: ROBOT_STATES.EXECUTING };
+        broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
+        broadcast(server, { type: "robot.move", ...command.parameters, timestamp: getCurrentTimestamp() });
     } else {
         state = { ...state, mode: ROBOT_STATES.EXECUTING };
         broadcast(server, { type: "robot.state", state, timestamp: getCurrentTimestamp() });
@@ -98,7 +141,6 @@ async function forwardQueryToBowServer(query: string, server: WebSocketServer): 
             const replyText = data.response || "Dạ, em đã xử lý xong.";
             const expression = data.expression || "happy";
 
-            // Synthesize audio using edge-tts via bow-server if possible
             let audioBase64: string | undefined;
             try {
                 const synthRes = await fetch(`${bowServerUrl}/speech/synthesize`, {
@@ -111,10 +153,9 @@ async function forwardQueryToBowServer(query: string, server: WebSocketServer): 
                     audioBase64 = audioBuffer.toString("base64");
                 }
             } catch (synthErr) {
-                logger.warn("TTS synthesis endpoint unavailable, will use browser voice");
+                logger.warn("TTS synthesis endpoint unavailable, using browser voice");
             }
 
-            // Trigger speak on simulator
             await handleCommand(
                 {
                     id: generateSessionId(),
@@ -186,6 +227,8 @@ server.on("connection", (socket) => {
             const payload = JSON.parse(data.toString());
             if (payload.type === "user.query" && payload.query) {
                 void forwardQueryToBowServer(payload.query, server);
+            } else if (payload.type === "robot.interrupt" || payload.type === "interrupt") {
+                handleInterrupt(server);
             } else {
                 void handleCommand(payload as RobotCommand, server);
             }
@@ -204,15 +247,32 @@ server.on("connection", (socket) => {
     });
 });
 
+// Telemetry heartbeat broadcast every 10s
+setInterval(() => {
+    const uptimeSec = Math.floor((Date.now() - startTime) / 1000);
+    state.uptime = uptimeSec;
+    const telemetry = {
+        type: "robot.telemetry",
+        battery: state.battery,
+        voltage: state.voltage,
+        wifiRssi: state.wifiRssi,
+        uptime: uptimeSec,
+        headPosition: state.headPosition,
+        expression: state.expression,
+        timestamp: getCurrentTimestamp(),
+    };
+    broadcast(server, telemetry);
+}, 10000);
+
 httpServer.listen(port, "0.0.0.0", () => {
-    logger.info("BOW ROBOT VIRTUAL SIMULATOR GUI ready", {
+    logger.info("BOW ROBOT VIRTUAL SIMULATOR GUI V4.0 ready", {
         port,
         url: `http://localhost:${port}`,
         sessionId: generateSessionId(),
         timestamp: getCurrentTimestamp(),
     });
     console.log(`\n======================================================`);
-    console.log(`🤖 BOW ROBOT VIRTUAL SIMULATOR & OLED 128x64 DASHBOARD`);
+    console.log(`🤖 BOW ROBOT VIRTUAL SIMULATOR & OLED 128x64 DASHBOARD V4.0`);
     console.log(`🌐 Web UI: http://localhost:${port}`);
     console.log(`======================================================\n`);
 });
