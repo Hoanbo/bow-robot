@@ -1,7 +1,15 @@
 /**
- * BOW ROBOT ESP32 FIRMWARE V3.3
- * Physical Robot Hardware Gateway: Animated Eyes (SSD1306), 2-Axis Pan/Tilt Servos,
- * I2S INMP441 Microphone Stream, and I2S MAX98357A Audio Speaker.
+ * ============================================================================
+ * BOW ROBOT V3.3 — ESP32-S3 N16R8 AUTONOMOUS FIRMWARE (ARDUINO / ESP-IDF)
+ * ============================================================================
+ * Hardware Integration:
+ * - MCU: ESP32-S3 (16MB Flash, 8MB PSRAM, Dual-Core 240MHz)
+ * - Display: 0.96" I2C OLED SSD1306 (128x64) 60 FPS Animated Eyes
+ * - Audio Input: I2S INMP441 Digital Microphone
+ * - Audio Output: I2S MAX98357A DAC Amplifier
+ * - Locomotion: Dual N20 Gear Motors (Differential H-Bridge Drive)
+ * - Network: WebSocket Client connecting to BOW Agent (Port 4000)
+ * ============================================================================
  */
 
 #include <Arduino.h>
@@ -11,142 +19,217 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <ESP32Servo.h>
 #include "driver/i2s.h"
 #include "config.h"
 
 // Hardware Singletons
 Adafruit_SSD1306 display(OLED_SCREEN_WIDTH, OLED_SCREEN_HEIGHT, &Wire, -1);
 WebSocketsClient webSocket;
-Servo panServo;
-Servo tiltServo;
 
-// Robot Expression & Movement State
+// Robot Expression & Locomotion State
 enum ExpressionType {
     EXP_NEUTRAL,
     EXP_BLINK,
     EXP_HAPPY,
     EXP_THINKING,
-    EXP_SURPRISED,
-    EXP_SLEEPING,
     EXP_LISTENING,
     EXP_SPEAKING,
-    EXP_ERROR
+    EXP_ERROR,
+    EXP_SLEEPING
+};
+
+enum MoveDirection {
+    MOVE_STOP,
+    MOVE_FORWARD,
+    MOVE_BACKWARD,
+    MOVE_LEFT,
+    MOVE_RIGHT
 };
 
 ExpressionType currentExpression = EXP_NEUTRAL;
-int currentPan = 0;   // -90 to +90 degrees
-int currentTilt = 0;  // -45 to +45 degrees
-int targetPan = 0;
-int targetTilt = 0;
 bool isBlinking = false;
 unsigned long blinkStartTime = 0;
 unsigned long nextBlinkTime = 0;
-float thinkAngle = 0.0;
+float speakAnimationPhase = 0.0;
+unsigned long motorStopTimestamp = 0;
 
-// Task Handles
+// FreeRTOS Task Handles
 TaskHandle_t displayTaskHandle = NULL;
-TaskHandle_t servoTaskHandle = NULL;
+TaskHandle_t audioTaskHandle = NULL;
 
-// Prototypes
+// Function Prototypes
 void setupWiFi();
 void setupOLED();
-void setupServos();
+void setupMotors();
 void setupI2SMic();
 void setupI2SSpeaker();
+void setMotors(MoveDirection dir, int speed = MOTOR_DEFAULT_SPEED);
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
 void drawEyes();
 
-// FreeRTOS Task: OLED Animated Eyes Renderer (60 FPS)
+// ============================================================================
+// FREERTOS TASK: OLED ANIMATED EYES RENDERER (CORE 1 - 60 FPS)
+// ============================================================================
 void taskDisplayAnimation(void * parameter) {
     for (;;) {
+        // Automatic natural blinking logic
+        unsigned long now = millis();
+        if (!isBlinking && now >= nextBlinkTime) {
+            isBlinking = true;
+            blinkStartTime = now;
+        }
+        if (isBlinking && (now - blinkStartTime >= BLINK_DURATION_MS)) {
+            isBlinking = false;
+            nextBlinkTime = now + random(BLINK_MIN_DELAY_MS, BLINK_MAX_DELAY_MS);
+        }
+
         drawEyes();
-        vTaskDelay(pdMS_TO_TICKS(16)); // ~60fps
+        vTaskDelay(pdMS_TO_TICKS(16)); // ~60 FPS
     }
 }
 
-// FreeRTOS Task: Smooth Servo Head Motion
-void taskServoMotion(void * parameter) {
+// ============================================================================
+// FREERTOS TASK: I2S AUDIO STREAMING (CORE 0)
+// ============================================================================
+void taskAudioProcessing(void * parameter) {
+    const size_t bytesToRead = 512;
+    int16_t audioBuffer[256];
+    size_t bytesRead = 0;
+
     for (;;) {
-        // Smooth easing towards target angle
-        if (currentPan < targetPan) currentPan = min(currentPan + 2, targetPan);
-        else if (currentPan > targetPan) currentPan = max(currentPan - 2, targetPan);
-
-        if (currentTilt < targetTilt) currentTilt = min(currentTilt + 2, targetTilt);
-        else if (currentTilt > targetTilt) currentTilt = max(currentTilt - 2, targetTilt);
-
-        // Map -90..90 to 0..180 for standard servos
-        panServo.write(map(currentPan, -90, 90, 0, 180));
-        tiltServo.write(map(currentTilt, -45, 45, 45, 135));
-
-        vTaskDelay(pdMS_TO_TICKS(20)); // 50Hz update
+        // Stream mic audio to bow-agent when listening
+        if (currentExpression == EXP_LISTENING && webSocket.isConnected()) {
+            esp_err_t result = i2s_read(I2S_MIC_PORT, audioBuffer, bytesToRead, &bytesRead, pdMS_TO_TICKS(50));
+            if (result == ESP_OK && bytesRead > 0) {
+                webSocket.sendBIN((uint8_t*)audioBuffer, bytesRead);
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
+// ============================================================================
+// MAIN ARDUINO SETUP
+// ============================================================================
 void setup() {
     Serial.begin(115200);
-    Serial.println("\n[BOW-ROBOT-ESP32] Initializing V3.3 Hardware Engine...");
+    Serial.println("\n========================================================");
+    Serial.println("🤖 BOW ROBOT ESP32-S3 N16R8 FIRMWARE V3.3 INITIALIZING...");
+    Serial.println("========================================================");
 
     setupOLED();
-    setupServos();
+    setupMotors();
     setupI2SMic();
     setupI2SSpeaker();
     setupWiFi();
 
-    // Create FreeRTOS Background Animation & Motion Tasks
+    // Create FreeRTOS Background Tasks across Dual Cores
     xTaskCreatePinnedToCore(taskDisplayAnimation, "DisplayTask", 4096, NULL, 2, &displayTaskHandle, 1);
-    xTaskCreatePinnedToCore(taskServoMotion, "ServoTask", 2048, NULL, 1, &servoTaskHandle, 1);
+    xTaskCreatePinnedToCore(taskAudioProcessing, "AudioTask", 4096, NULL, 1, &audioTaskHandle, 0);
 
-    // Setup WebSocket Gateway Client
+    // Connect to BOW Agent Central Brain Gateway (Port 4000)
     webSocket.begin(BOW_GATEWAY_HOST, BOW_GATEWAY_PORT, BOW_GATEWAY_PATH);
     webSocket.onEvent(webSocketEvent);
-    webSocket.setReconnectInterval(3000);
+    webSocket.setReconnectInterval(2500);
 
     nextBlinkTime = millis() + random(BLINK_MIN_DELAY_MS, BLINK_MAX_DELAY_MS);
-    Serial.println("[BOW-ROBOT-ESP32] Hardware ready. Entering main loop.");
+    Serial.println("✅ Hardware Ready! Waiting for BOW Agent Handshake...");
 }
 
+// ============================================================================
+// MAIN ARDUINO LOOP
+// ============================================================================
 void loop() {
     webSocket.loop();
-    vTaskDelay(pdMS_TO_TICKS(5));
+
+    // Auto-stop motors after duration expired
+    if (motorStopTimestamp > 0 && millis() >= motorStopTimestamp) {
+        setMotors(MOVE_STOP);
+        motorStopTimestamp = 0;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(2));
 }
 
+// ============================================================================
+// HARDWARE INITIALIZATIONS
+// ============================================================================
 void setupWiFi() {
     Serial.printf("[WIFI] Connecting to SSID: %s\n", WIFI_SSID);
+    WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-        delay(500);
+    while (WiFi.status() != WL_CONNECTED && attempts < 25) {
+        delay(300);
         Serial.print(".");
         attempts++;
     }
     if (WiFi.status() == WL_CONNECTED) {
-        Serial.printf("\n[WIFI] Connected! IP: %s\n", WiFi.localIP().toString().c_str());
+        Serial.printf("\n[WIFI] Connected! Robot IP: %s\n", WiFi.localIP().toString().c_str());
     } else {
-        Serial.println("\n[WIFI] Warning: WiFi not connected yet, will retry in background.");
+        Serial.println("\n[WIFI] Wi-Fi connection timed out. Will auto-retry in background.");
     }
 }
 
 void setupOLED() {
     Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
     if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_I2C_ADDRESS)) {
-        Serial.println("[OLED] Warning: SSD1306 allocation failed");
+        Serial.println("[OLED] Warning: SSD1306 allocation failed.");
         return;
     }
     display.clearDisplay();
     display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1);
-    display.setCursor(20, 28);
-    display.println("BOW ROBOT V3.3");
+    display.setCursor(18, 26);
+    display.println("BOW ROBOT S3");
+    display.setCursor(30, 38);
+    display.println("CONNECTING...");
     display.display();
-    delay(500);
+    delay(600);
 }
 
-void setupServos() {
-    panServo.attach(SERVO_PAN_PIN);
-    tiltServo.attach(SERVO_TILT_PIN);
-    panServo.write(90);  // Center (0 deg)
-    tiltServo.write(90); // Center (0 deg)
+void setupMotors() {
+    pinMode(MOTOR_LEFT_IN1, OUTPUT);
+    pinMode(MOTOR_LEFT_IN2, OUTPUT);
+    pinMode(MOTOR_RIGHT_IN1, OUTPUT);
+    pinMode(MOTOR_RIGHT_IN2, OUTPUT);
+    setMotors(MOVE_STOP);
+}
+
+void setMotors(MoveDirection dir, int speed) {
+    switch (dir) {
+        case MOVE_FORWARD:
+            analogWrite(MOTOR_LEFT_IN1, speed);
+            analogWrite(MOTOR_LEFT_IN2, 0);
+            analogWrite(MOTOR_RIGHT_IN1, speed);
+            analogWrite(MOTOR_RIGHT_IN2, 0);
+            break;
+        case MOVE_BACKWARD:
+            analogWrite(MOTOR_LEFT_IN1, 0);
+            analogWrite(MOTOR_LEFT_IN2, speed);
+            analogWrite(MOTOR_RIGHT_IN1, 0);
+            analogWrite(MOTOR_RIGHT_IN2, speed);
+            break;
+        case MOVE_LEFT:
+            analogWrite(MOTOR_LEFT_IN1, 0);
+            analogWrite(MOTOR_LEFT_IN2, speed);
+            analogWrite(MOTOR_RIGHT_IN1, speed);
+            analogWrite(MOTOR_RIGHT_IN2, 0);
+            break;
+        case MOVE_RIGHT:
+            analogWrite(MOTOR_LEFT_IN1, speed);
+            analogWrite(MOTOR_LEFT_IN2, 0);
+            analogWrite(MOTOR_RIGHT_IN1, 0);
+            analogWrite(MOTOR_RIGHT_IN2, speed);
+            break;
+        case MOVE_STOP:
+        default:
+            analogWrite(MOTOR_LEFT_IN1, 0);
+            analogWrite(MOTOR_LEFT_IN2, 0);
+            analogWrite(MOTOR_RIGHT_IN1, 0);
+            analogWrite(MOTOR_RIGHT_IN2, 0);
+            break;
+    }
 }
 
 void setupI2SMic() {
@@ -161,14 +244,12 @@ void setupI2SMic() {
         .dma_buf_len = 512,
         .use_apll = false,
     };
-
     i2s_pin_config_t i2s_mic_pins = {
         .bck_io_num = I2S_MIC_SCK_PIN,
         .ws_io_num = I2S_MIC_WS_PIN,
         .data_out_num = I2S_PIN_NO_CHANGE,
         .data_in_num = I2S_MIC_SD_PIN,
     };
-
     i2s_driver_install(I2S_MIC_PORT, &i2s_mic_config, 0, NULL);
     i2s_set_pin(I2S_MIC_PORT, &i2s_mic_pins);
 }
@@ -185,48 +266,73 @@ void setupI2SSpeaker() {
         .dma_buf_len = 512,
         .use_apll = false,
     };
-
     i2s_pin_config_t i2s_spk_pins = {
         .bck_io_num = I2S_SPK_BCLK_PIN,
         .ws_io_num = I2S_SPK_LRC_PIN,
         .data_out_num = I2S_SPK_DIN_PIN,
         .data_in_num = I2S_PIN_NO_CHANGE,
     };
-
     i2s_driver_install(I2S_SPK_PORT, &i2s_spk_config, 0, NULL);
     i2s_set_pin(I2S_SPK_PORT, &i2s_spk_pins);
 }
 
+// ============================================================================
+// WEBSOCKET COMMUNICATION WITH BOW AGENT
+// ============================================================================
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     switch (type) {
         case WStype_DISCONNECTED:
-            Serial.println("[WS] Disconnected from BOW Gateway");
+            Serial.println("[WS] Disconnected from BOW Agent.");
+            currentExpression = EXP_ERROR;
             break;
         case WStype_CONNECTED:
-            Serial.println("[WS] Connected to BOW Gateway!");
+            Serial.println("[WS] Handshake SUCCESS! Connected to BOW Agent V3.3");
+            currentExpression = EXP_HAPPY;
+            // Send client registration
+            webSocket.sendTXT("{\"type\":\"client.register\",\"client\":\"bow-robot-esp32s3\",\"version\":\"3.3\"}");
             break;
         case WStype_TEXT: {
             StaticJsonDocument<1024> doc;
             DeserializationError error = deserializeJson(doc, payload, length);
-            if (error) {
-                Serial.printf("[WS] JSON parse error: %s\n", error.c_str());
-                return;
-            }
+            if (error) return;
 
-            const char* cmdType = doc["type"] | "";
-            if (strcmp(cmdType, "set_expression") == 0) {
-                const char* exp = doc["parameters"]["expression"] | "neutral";
+            const char* msgType = doc["type"] | "";
+
+            // Handle Emotion Changes
+            if (strcmp(msgType, "robot.emotion") == 0 || strcmp(msgType, "set_expression") == 0) {
+                const char* exp = doc["emotion"] | doc["parameters"]["expression"] | "neutral";
                 if (strcmp(exp, "happy") == 0) currentExpression = EXP_HAPPY;
                 else if (strcmp(exp, "thinking") == 0) currentExpression = EXP_THINKING;
-                else if (strcmp(exp, "surprised") == 0) currentExpression = EXP_SURPRISED;
-                else if (strcmp(exp, "sleeping") == 0) currentExpression = EXP_SLEEPING;
                 else if (strcmp(exp, "listening") == 0) currentExpression = EXP_LISTENING;
                 else if (strcmp(exp, "speaking") == 0) currentExpression = EXP_SPEAKING;
+                else if (strcmp(exp, "sleeping") == 0) currentExpression = EXP_SLEEPING;
+                else if (strcmp(exp, "error") == 0) currentExpression = EXP_ERROR;
                 else currentExpression = EXP_NEUTRAL;
-            } else if (strcmp(cmdType, "move_head") == 0) {
-                targetPan = constrain(doc["parameters"]["pan"] | 0, -90, 90);
-                targetTilt = constrain(doc["parameters"]["tilt"] | 0, -45, 45);
             }
+
+            // Handle Locomotion / Movement Commands
+            else if (strcmp(msgType, "robot.move") == 0) {
+                const char* dir = doc["direction"] | "stop";
+                int durationMs = doc["duration"] | 1000;
+                int speed = doc["speed"] | MOTOR_DEFAULT_SPEED;
+
+                if (strcmp(dir, "forward") == 0) setMotors(MOVE_FORWARD, speed);
+                else if (strcmp(dir, "backward") == 0) setMotors(MOVE_BACKWARD, speed);
+                else if (strcmp(dir, "left") == 0) setMotors(MOVE_LEFT, speed);
+                else if (strcmp(dir, "right") == 0) setMotors(MOVE_RIGHT, speed);
+                else setMotors(MOVE_STOP);
+
+                if (durationMs > 0) {
+                    motorStopTimestamp = millis() + durationMs;
+                }
+            }
+            break;
+        }
+        case WStype_BIN: {
+            // Audio Playback Stream from BOW Agent (TTS Audio chunk)
+            size_t bytesWritten = 0;
+            i2s_write(I2S_SPK_PORT, payload, length, &bytesWritten, portMAX_DELAY);
+            currentExpression = EXP_SPEAKING;
             break;
         }
         default:
@@ -234,74 +340,74 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     }
 }
 
+// ============================================================================
+// OLED 128x64 ANIMATED EYES DRAW ENGINE
+// ============================================================================
 void drawEyes() {
     display.clearDisplay();
 
-    unsigned long now = millis();
-
-    // Natural Blinking
-    if (!isBlinking && now >= nextBlinkTime && currentExpression != EXP_SLEEPING) {
-        isBlinking = true;
-        blinkStartTime = now;
+    // Blink state
+    if (isBlinking && currentExpression != EXP_SLEEPING) {
+        display.fillRoundRect(22, 30, 36, 4, 2, SSD1306_WHITE);
+        display.fillRoundRect(70, 30, 36, 4, 2, SSD1306_WHITE);
+        display.display();
+        return;
     }
 
-    float blinkRatio = 0.0;
-    if (isBlinking) {
-        unsigned long elapsed = now - blinkStartTime;
-        if (elapsed >= BLINK_DURATION_MS) {
-            isBlinking = false;
-            nextBlinkTime = now + random(BLINK_MIN_DELAY_MS, BLINK_MAX_DELAY_MS);
-        } else {
-            float progress = (float)elapsed / BLINK_DURATION_MS;
-            blinkRatio = progress <= 0.5 ? progress * 2.0 : (1.0 - progress) * 2.0;
+    switch (currentExpression) {
+        case EXP_HAPPY:
+            // Curved laughing eyes (^ _ ^)
+            display.fillRoundRect(22, 20, 36, 26, 8, SSD1306_WHITE);
+            display.fillCircle(40, 38, 16, SSD1306_BLACK);
+            display.fillRoundRect(70, 20, 36, 26, 8, SSD1306_WHITE);
+            display.fillCircle(88, 38, 16, SSD1306_BLACK);
+            break;
+
+        case EXP_THINKING:
+            // Left eye focused, right eye tilted (O _ o)
+            display.fillRoundRect(26, 18, 30, 28, 6, SSD1306_WHITE);
+            display.fillCircle(41, 32, 7, SSD1306_BLACK);
+            display.fillRoundRect(74, 26, 26, 18, 5, SSD1306_WHITE);
+            display.fillCircle(87, 35, 4, SSD1306_BLACK);
+            break;
+
+        case EXP_LISTENING:
+            // Big attentive round eyes (O _ O)
+            display.fillCircle(40, 32, 18, SSD1306_WHITE);
+            display.fillCircle(40, 32, 7, SSD1306_BLACK);
+            display.fillCircle(88, 32, 18, SSD1306_WHITE);
+            display.fillCircle(88, 32, 7, SSD1306_BLACK);
+            break;
+
+        case EXP_SPEAKING: {
+            // Bouncing height animated talking eyes
+            speakAnimationPhase += 0.25;
+            int bounce = abs((int)(sin(speakAnimationPhase) * 12));
+            display.fillRoundRect(24, 18 - bounce/2, 34, 28 + bounce, 8, SSD1306_WHITE);
+            display.fillRoundRect(70, 18 - bounce/2, 34, 28 + bounce, 8, SSD1306_WHITE);
+            break;
         }
-    }
 
-    thinkAngle += 0.05;
+        case EXP_ERROR:
+            // Cross X eyes
+            display.drawLine(24, 18, 56, 46, SSD1306_WHITE);
+            display.drawLine(24, 46, 56, 18, SSD1306_WHITE);
+            display.drawLine(72, 18, 104, 46, SSD1306_WHITE);
+            display.drawLine(72, 46, 104, 18, SSD1306_WHITE);
+            break;
 
-    // Pan & Tilt offsets
-    int panOffset = (currentPan * 10) / 90;
-    int tiltOffset = (currentTilt * 6) / 45;
+        case EXP_SLEEPING:
+            // Sleeping slits (~ _ ~)
+            display.fillRoundRect(24, 34, 32, 4, 2, SSD1306_WHITE);
+            display.fillRoundRect(72, 34, 32, 4, 2, SSD1306_WHITE);
+            break;
 
-    int leftCenterX = 38 + panOffset;
-    int leftCenterY = 32 + tiltOffset;
-    int rightCenterX = 90 + panOffset;
-    int rightCenterY = 32 + tiltOffset;
-
-    int eyeWidth = 28;
-    int eyeHeight = 34;
-
-    if (blinkRatio > 0.0) {
-        eyeHeight = max(4, (int)(eyeHeight * (1.0 - blinkRatio)));
-    }
-
-    if (currentExpression == EXP_HAPPY) {
-        // Happy crescent eyes
-        display.fillCircle(leftCenterX, leftCenterY, eyeWidth / 2, SSD1306_WHITE);
-        display.fillCircle(leftCenterX, leftCenterY + 4, eyeWidth / 2, SSD1306_BLACK);
-
-        display.fillCircle(rightCenterX, rightCenterY, eyeWidth / 2, SSD1306_WHITE);
-        display.fillCircle(rightCenterX, rightCenterY + 4, eyeWidth / 2, SSD1306_BLACK);
-    } else if (currentExpression == EXP_SLEEPING) {
-        // Sleeping horizontal lines
-        display.fillRoundRect(leftCenterX - eyeWidth / 2, leftCenterY - 2, eyeWidth, 5, 2, SSD1306_WHITE);
-        display.fillRoundRect(rightCenterX - eyeWidth / 2, rightCenterY - 2, eyeWidth, 5, 2, SSD1306_WHITE);
-    } else if (currentExpression == EXP_SURPRISED) {
-        // Big round surprised eyes
-        display.fillCircle(leftCenterX, leftCenterY, 18, SSD1306_WHITE);
-        display.fillCircle(rightCenterX, rightCenterY, 18, SSD1306_WHITE);
-    } else if (currentExpression == EXP_THINKING) {
-        // Thinking eyes with rolling pupil
-        display.fillRoundRect(leftCenterX - eyeWidth / 2, leftCenterY - 12, eyeWidth, 24, 6, SSD1306_WHITE);
-        display.fillRoundRect(rightCenterX - eyeWidth / 2, rightCenterY - 12, eyeWidth, 24, 6, SSD1306_WHITE);
-        int pupilX = (int)(cos(thinkAngle) * 4);
-        display.fillCircle(leftCenterX + pupilX, leftCenterY - 3, 4, SSD1306_BLACK);
-        display.fillCircle(rightCenterX + pupilX, rightCenterY - 3, 4, SSD1306_BLACK);
-    } else {
-        // Neutral / Speaking / Listening rounded pill eyes
-        int radius = min(eyeWidth, eyeHeight) / 2;
-        display.fillRoundRect(leftCenterX - eyeWidth / 2, leftCenterY - eyeHeight / 2, eyeWidth, eyeHeight, radius, SSD1306_WHITE);
-        display.fillRoundRect(rightCenterX - eyeWidth / 2, rightCenterY - eyeHeight / 2, eyeWidth, eyeHeight, radius, SSD1306_WHITE);
+        case EXP_NEUTRAL:
+        default:
+            // Cute rounded rectangle eyes
+            display.fillRoundRect(24, 18, 34, 28, 8, SSD1306_WHITE);
+            display.fillRoundRect(70, 18, 34, 28, 8, SSD1306_WHITE);
+            break;
     }
 
     display.display();
